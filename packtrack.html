@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PackTrack · NC State Mammalogy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* NC State palette: Wolfpack Red #CC0000, Reynolds #990000, black, grays */
+:root{
+  --red:#CC0000; --darkred:#990000; --ink:#1A1A1A; --paper:#FFFFFF;
+  --wash:#F2F2F2; --line:#D6D6D6; --gray:#6E6E6E; --good:#2E6B2E;
+  --shadow:0 1px 3px rgba(0,0,0,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'Roboto',system-ui,sans-serif; font-size:16px; line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
+}
+h1,h2,h3{font-family:'Roboto Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em; margin:0}
+.num{font-variant-numeric:tabular-nums}
+img{max-width:100%}
+
+header.app{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:var(--red); color:#fff; margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 0 calc(-1*max(16px,env(safe-area-inset-right,0px)));
+  padding:10px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));
+  display:flex; align-items:center; gap:10px; border-bottom:4px solid var(--ink);
+}
+/* Drop the official NC State logo file on your server and set src below (header shows fine without it). */
+header.app img.logo{height:30px; width:auto; display:none}
+header.app img.logo[src]{display:block}
+header.app h1{font-size:21px; color:#fff; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.chip{font-size:12px; border:1.5px solid rgba(255,255,255,.7); border-radius:999px; padding:3px 10px; color:#fff; white-space:nowrap; background:transparent}
+.chip.btn{cursor:pointer}
+.chip.warnc{background:#fff; color:var(--darkred); font-weight:700; border-color:#fff}
+
+main{max-width:640px; margin:0 auto}
+section.view{display:none; padding:14px 0 8px}
+section.view.on{display:block}
+.eyebrow{font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--red); margin-bottom:2px}
+.viewtitle{font-size:25px; margin-bottom:2px}
+.sub{color:var(--gray); font-size:14px; margin:0 0 12px}
+
+details.proto{border:1.5px solid var(--line); border-radius:10px; background:var(--wash); margin:0 0 14px; font-size:14px}
+details.proto summary{padding:9px 12px; font-weight:600; cursor:pointer}
+details.proto .pbody{padding:0 12px 10px; color:var(--gray)}
+dl.cats dt{font-weight:700; color:var(--ink); margin-top:6px}
+dl.cats dd{margin:0}
+
+.fgroup{margin:0 0 16px}
+.flabel{font-weight:700; font-size:14px; margin-bottom:6px; display:flex; align-items:baseline; gap:8px}
+.flabel .hint{font-weight:400; color:var(--gray); font-size:12.5px}
+.btnrow{display:flex; flex-wrap:wrap; gap:8px}
+.ppr{display:flex; gap:10px; align-items:center}
+.ppr .ppl{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gray); min-width:48px}
+.ppr .btnrow{flex:1; min-width:0}
+button.opt{
+  font:inherit; font-weight:600; font-size:15px; color:var(--ink);
+  background:#fff; border:1.5px solid var(--line); border-radius:9px;
+  padding:12px 14px; min-height:48px; cursor:pointer; box-shadow:var(--shadow);
+}
+button.opt.sel{background:var(--red); color:#fff; border-color:var(--red)}
+button.opt:disabled{opacity:.45; cursor:default}
+
+.dogpick{display:flex; gap:8px; overflow-x:auto; padding:2px 0 6px}
+.dogpick .dcard{flex:0 0 auto; width:86px; border:1.5px solid var(--line); border-radius:10px; background:#fff; padding:6px; text-align:center; cursor:pointer; box-shadow:var(--shadow)}
+.dogpick .dcard.sel{border-color:var(--red); outline:2px solid var(--red)}
+.dogpick .dcard img,.dogpick .dcard .ph{width:72px; height:72px; object-fit:cover; border-radius:7px; background:var(--wash); display:block; margin:0 auto}
+.dogpick .dcard .ph{display:flex; align-items:center; justify-content:center; color:var(--gray); font-size:24px}
+.dogpick .dcard .nm{font-size:12.5px; font-weight:600; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+button.primary{
+  font-family:'Roboto Condensed',sans-serif; text-transform:uppercase; letter-spacing:.04em;
+  font-weight:700; font-size:18px; width:100%;
+  background:var(--red); color:#fff; border:none; border-radius:10px;
+  padding:15px; min-height:54px; cursor:pointer; box-shadow:var(--shadow);
+}
+button.primary:disabled{opacity:.5; cursor:default}
+button.ghost{font:inherit; font-weight:600; font-size:14px; color:var(--ink); background:transparent; border:1.5px solid var(--line); border-radius:9px; padding:9px 13px; cursor:pointer}
+button.ghost.danger{color:var(--darkred); border-color:var(--darkred)}
+
+input[type=text]{font:inherit; width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:9px; background:#fff; color:var(--ink)}
+.cardbox{border:1.5px solid var(--line); border-radius:12px; background:#fff; padding:14px; box-shadow:var(--shadow); margin-bottom:14px}
+
+.timer{display:flex; align-items:center; gap:14px; border:1.5px solid var(--line); border-radius:12px; background:#fff; padding:12px 14px; margin:0 0 16px}
+.timer .big{font-family:'Roboto Condensed',sans-serif; font-size:40px; font-weight:700; min-width:92px}
+.timer.go{border-color:var(--red)} .timer.done{border-color:var(--good)}
+.timer .tl{font-size:13.5px; color:var(--gray)}
+
+.recents{margin-top:18px}
+.recents h3{font-size:15px; margin-bottom:6px}
+.rrow{display:flex; align-items:center; gap:10px; border-top:1px solid var(--line); padding:8px 0; font-size:14px}
+.rrow .rmeta{flex:1; min-width:0}
+.rrow .rmeta .r2{color:var(--gray); font-size:12.5px}
+
+nav.tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:35;
+  background:var(--ink); border-top:3px solid var(--red);
+  display:flex; justify-content:space-around;
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+}
+nav.tabs a{flex:1 1 0; min-width:0; text-align:center; text-decoration:none; color:#BBB; font-size:9px; font-weight:700; padding:5px 0 3px; position:relative; text-transform:uppercase; letter-spacing:0; overflow:hidden; white-space:nowrap}
+nav.tabs a .ic{display:block; font-size:17px; line-height:1.2}
+nav.tabs a.on{color:#fff}
+nav.tabs a.on .ic{filter:none}
+nav.tabs a .bdg{position:absolute; top:-1px; right:3px; background:var(--red); color:#fff; font-size:8.5px; line-height:13px; border-radius:999px; padding:0 3px; min-width:13px}
+
+.stat2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px}
+.stat{border:1.5px solid var(--line); border-top:4px solid var(--red); border-radius:10px; background:#fff; padding:12px; box-shadow:var(--shadow)}
+.stat .v{font-family:'Roboto Condensed',sans-serif; font-size:32px; font-weight:700}
+.stat .l{font-size:12.5px; color:var(--gray)}
+.verdict{border:1.5px solid var(--ink); border-left:6px solid var(--red); border-radius:10px; background:#fff; padding:12px 14px; font-size:15px; margin-bottom:16px}
+.bars{display:flex; flex-direction:column; gap:8px; margin:10px 0 16px}
+.bar{display:grid; grid-template-columns:140px 1fr 54px; gap:8px; align-items:center; font-size:13.5px}
+.bar .tr{height:20px; background:var(--wash); border-radius:5px; min-width:0; overflow:hidden}
+.bar .fl{height:100%; background:var(--red); border-radius:5px}
+.bar.ctl .fl{background:var(--gray)}
+
+.hm{overflow-x:auto; margin-bottom:16px}
+.hm table{border-collapse:collapse; font-size:12px}
+.hm th,.hm td{border:1px solid var(--line); padding:5px 7px; text-align:center; min-width:40px}
+.hm th{background:var(--wash); font-weight:600}
+.hm th.rowh{text-align:right}
+.hm td{background:color-mix(in srgb, var(--red) calc(var(--a,0)*1%), #fff)}
+
+.doglist{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+.doglist .dl{border:1.5px solid var(--line); border-radius:12px; background:#fff; padding:8px; cursor:pointer; box-shadow:var(--shadow)}
+.doglist .dl img,.doglist .dl .ph{width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:var(--wash); display:block}
+.doglist .dl .nm{font-weight:700; margin-top:5px}
+.doglist .dl .mt{font-size:12.5px; color:var(--gray)}
+
+.banner{border:2px solid var(--darkred); border-radius:10px; background:#fff; color:var(--darkred); font-size:14px; font-weight:600; padding:10px 12px; margin:12px 0}
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(100px + env(safe-area-inset-bottom,0px)); z-index:50; background:var(--ink); color:#fff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:999px; box-shadow:var(--shadow); transition:opacity .3s}
+dialog{border:3px solid var(--ink); border-radius:12px; background:#fff; color:var(--ink); padding:18px; max-width:min(92vw,420px)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+#qrbox{display:flex; justify-content:center; padding:10px; background:#fff}
+.fig{border:1.5px solid var(--line); border-radius:12px; background:#fff; padding:10px 10px 6px; margin:8px 0 4px; box-shadow:var(--shadow)}
+.fig svg{width:100%; height:auto; display:block}
+.figcap{font-size:13px; color:var(--gray); margin:6px 0 18px}
+.legend{display:flex; flex-wrap:wrap; gap:12px; font-size:12.5px; color:var(--gray); margin:0 0 16px}
+.legend .sw{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px}
+.mtabwrap{overflow-x:auto; margin:8px 0 16px}
+.mtab{width:100%; border-collapse:collapse; font-size:13.5px}
+.mtab th,.mtab td{border:1px solid var(--line); padding:7px 8px; text-align:left; vertical-align:top}
+.mtab th{background:var(--wash)}
+.pspace{display:grid; grid-template-columns:22px 1fr; grid-template-rows:1fr 24px; gap:4px; align-items:center}
+.pspace .ytit{grid-column:1; grid-row:1; writing-mode:vertical-rl; transform:rotate(180deg); font-size:10.5px; color:var(--gray); text-align:center}
+.pspace .xtit{grid-column:2; grid-row:2; font-size:10.5px; color:var(--gray); text-align:center}
+.pplot{grid-column:2; grid-row:1; position:relative; aspect-ratio:1.25; max-width:100%;
+  background:
+    linear-gradient(to right, var(--line) 1px, transparent 1px) 0 0/25% 100%,
+    linear-gradient(to top, var(--line) 1px, transparent 1px) 0 100%/100% 25%,
+    var(--wash);
+  border:1.5px solid var(--line); border-radius:8px}
+.pdot{position:absolute; transform:translate(-50%,50%); text-align:center; width:34px}
+.pdot img,.pdot .ph{width:32px; height:32px; border-radius:50%; object-fit:cover; display:block; margin:0 auto;
+  border:2.5px solid var(--red); background:#fff; font-size:18px; line-height:32px}
+.pdot.thin img,.pdot.thin .ph{border-style:dashed; border-color:var(--gray); opacity:.75}
+.pdot{cursor:pointer}
+.pdot:hover,.pdot:focus,.pdot.on{z-index:5}
+.pdot.on img,.pdot.on .ph{border-width:4px; box-shadow:0 0 0 2px #fff}
+.pdot:focus{outline:none}
+.pdot:focus img,.pdot:focus .ph{outline:2px solid var(--ink); outline-offset:2px}
+body.frozen .ro button.opt, body.frozen .ro button.primary, body.frozen .ro button.ghost,
+body.frozen .ro input, body.frozen .ro .dogpick, body.frozen .ro .doglist .dl{
+  opacity:.45; pointer-events:none}
+body.frozen .ro .banner{opacity:1}
+.preadout{font-size:13px; color:var(--ink); background:var(--wash); border-radius:8px;
+  padding:8px 10px; margin-top:8px; min-height:34px}
+.doglist .dl svg{width:100%; height:auto; margin-top:4px}
+.trial{border:1.5px solid var(--line); border-left:6px solid var(--red); border-radius:12px; background:#fff; padding:12px; margin:12px 0; box-shadow:var(--shadow)}
+.trial.done{border-left-color:var(--good); background:var(--wash)}
+.trial .thead{display:flex; align-items:center; gap:10px; margin-bottom:8px}
+.trial .tclock{font-family:'Roboto Condensed',sans-serif; font-size:30px; font-weight:700; min-width:76px}
+.trial .tclock.over{color:var(--darkred)}
+.trial .tstate{flex:1; min-width:0; font-size:13px; color:var(--gray); font-weight:600}
+.trial .tlabel{font-size:12.5px; font-weight:700; color:var(--gray); margin-bottom:4px}
+.guide p{margin:0 0 12px}
+.guide h3{font-size:17px; margin:18px 0 6px; border-bottom:3px solid var(--red); display:inline-block; padding-bottom:2px}
+.guide ul{margin:0 0 12px; padding-left:20px}
+.guide li{margin-bottom:6px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:420px){.bar{grid-template-columns:105px 1fr 50px}}
+@media (max-width:360px){nav.tabs a{font-size:7px; letter-spacing:-0.2px} nav.tabs a .ic{font-size:15px}}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <img class="logo" alt="NC State">
+  <h1>PackTrack</h1>
+  <span class="chip" id="syncchip">connecting…</span>
+  <span class="chip btn" id="obschip">Observer</span>
+  <span class="chip btn" id="qrchip">QR</span>
+</header>
+
+<main>
+<div class="banner" id="cfgbanner" hidden></div>
+
+<!-- ================= METHODS ================= -->
+<section class="view guide" id="v-methods">
+  <div class="eyebrow">Start here · The methods</div>
+  <h2 class="viewtitle">How to watch animals</h2>
+  <p class="sub">Four dogs, ten minutes. You cannot write down everything, so every field study picks a sampling rule. Jeanne Altmann's 1974 paper defined the rules primatologists still use, and today we run three of them on dogs.</p>
+
+  <h3>The raw behavior stream</h3>
+  <div class="fig"><svg viewBox="0 0 360 156" role="img" aria-label="Timeline of four dogs' behaviors with shake events marked">
+    <defs>
+      <g id="ptbase">
+        <text x="2" y="33" font-size="9" fill="#444">Dog 1</text>
+        <text x="2" y="65" font-size="9" fill="#444">Dog 2</text>
+        <text x="2" y="97" font-size="9" fill="#444">Dog 3</text>
+        <text x="2" y="129" font-size="9" fill="#444">Dog 4</text>
+        <rect x="40" y="22" width="70" height="16" fill="#DDDDDD"/><rect x="110" y="22" width="90" height="16" fill="#CC0000"/><rect x="200" y="22" width="62" height="16" fill="#E8A33D"/><rect x="262" y="22" width="90" height="16" fill="#DDDDDD"/>
+        <rect x="40" y="54" width="110" height="16" fill="#CC0000"/><rect x="150" y="54" width="82" height="16" fill="#DDDDDD"/><rect x="232" y="54" width="120" height="16" fill="#CC0000"/>
+        <rect x="40" y="86" width="52" height="16" fill="#E8A33D"/><rect x="92" y="86" width="148" height="16" fill="#DDDDDD"/><rect x="240" y="86" width="112" height="16" fill="#4A4A4A"/>
+        <rect x="40" y="118" width="82" height="16" fill="#DDDDDD"/><rect x="122" y="118" width="70" height="16" fill="#E8A33D"/><rect x="192" y="118" width="90" height="16" fill="#CC0000"/><rect x="282" y="118" width="70" height="16" fill="#DDDDDD"/>
+        <line x1="40" y1="144" x2="346" y2="144" stroke="#999" stroke-width="1.5"/>
+        <polygon points="346,140 354,144 346,148" fill="#999"/>
+        <text x="180" y="155" font-size="9" fill="#777" text-anchor="middle">time (10 minutes)</text>
+      </g>
+      <g id="ptshakes">
+        <polygon points="110,24 115,30 110,36 105,30" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+        <polygon points="262,24 267,30 262,36 257,30" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+        <polygon points="150,56 155,62 150,68 145,62" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+        <polygon points="300,56 305,62 300,68 295,62" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+        <polygon points="240,88 245,94 240,100 235,94" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+        <polygon points="282,120 287,126 282,132 277,126" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+      </g>
+    </defs>
+    <use href="#ptbase"/><use href="#ptshakes"/>
+  </svg></div>
+  <p class="figcap">What an all-seeing observer would record. Colored bars are behavioral <b>states</b>, which have duration. White diamonds are <b>events</b>, instantaneous behaviors like a shake. Notice that most diamonds in this example sit at color boundaries: that placement is exactly the hypothesis we are testing, drawn here as if it were true.</p>
+  <div class="legend">
+    <span><span class="sw" style="background:#CC0000"></span>Play</span>
+    <span><span class="sw" style="background:#E8A33D"></span>Social</span>
+    <span><span class="sw" style="background:#DDDDDD"></span>Alone</span>
+    <span><span class="sw" style="background:#4A4A4A"></span>Person</span>
+    <span><span class="sw" style="background:#fff; border:1.5px solid #1A1A1A"></span>Shake (event)</span>
+  </div>
+
+  <h3>Ad libitum: write down what you notice</h3>
+  <div class="fig"><svg viewBox="0 0 360 156" role="img" aria-label="Ad libitum sampling records only conspicuous behavior">
+    <use href="#ptbase" opacity=".22"/><use href="#ptshakes" opacity=".22"/>
+    <rect x="110" y="22" width="90" height="16" fill="#CC0000"/>
+    <rect x="40" y="54" width="110" height="16" fill="#CC0000"/>
+    <rect x="232" y="54" width="120" height="16" fill="#CC0000"/>
+    <rect x="192" y="118" width="90" height="16" fill="#CC0000"/>
+    <polygon points="300,56 305,62 300,68 295,62" fill="#fff" stroke="#1A1A1A" stroke-width="1.5"/>
+    <text x="8" y="14" font-size="11">👀</text>
+    <text x="24" y="14" font-size="9" fill="#777">what the notebook actually captures</text>
+  </svg></div>
+  <p class="figcap">No rule at all, the default of the notebook naturalist. Your eye goes to the loud wrestling match and skips the dog standing quietly, so conspicuous animals and dramatic behaviors are overrepresented: here the observer caught every play bout, one shake that happened near the action, and nothing else. Fine for generating ideas, useless for estimating rates. Altmann wrote her paper largely to get primatology off this method.</p>
+
+  <h3>Focal-animal sampling: one animal, everything it does</h3>
+  <div class="fig"><svg viewBox="0 0 360 156" role="img" aria-label="Focal sampling follows one animal completely">
+    <use href="#ptbase"/><use href="#ptshakes"/>
+    <rect x="0" y="18" width="360" height="23" fill="#fff" opacity=".78"/>
+    <rect x="0" y="82" width="360" height="23" fill="#fff" opacity=".78"/>
+    <rect x="0" y="114" width="360" height="23" fill="#fff" opacity=".78"/>
+    <rect x="38" y="51" width="316" height="22" fill="none" stroke="#CC0000" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="40" y="48" font-size="9" fill="#CC0000" font-weight="700">FOCAL ANIMAL</text>
+  </svg></div>
+  <p class="figcap">Pick one animal in advance, record everything it does for a set window, then move to the next. Every individual gets equal effort, so time budgets and behavior rates come out unbiased, and the observer never misses what happened before an event because they were already watching. <b>Team B runs 10-second focal windows:</b> the fraction of windows where behavior changes is the baseline our shake data gets tested against. The window is 10 s because the shake window is 10 s, and two rates are only comparable over the same span of time.</p>
+
+  <h3>All-occurrence sampling: every instance of one behavior</h3>
+  <div class="fig"><svg viewBox="0 0 360 156" role="img" aria-label="All-occurrence sampling records every shake across the group">
+    <use href="#ptbase" opacity=".3"/><use href="#ptshakes"/>
+    <circle cx="110" cy="30" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+    <circle cx="262" cy="30" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+    <circle cx="150" cy="62" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+    <circle cx="300" cy="62" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+    <circle cx="240" cy="94" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+    <circle cx="282" cy="126" r="9" fill="none" stroke="#CC0000" stroke-width="2"/>
+  </svg></div>
+  <p class="figcap">Watch the whole group and record every occurrence of a single behavior, wherever it happens. It works when the behavior is conspicuous enough to catch and rare enough to keep up with, which a shake is. It yields honest counts of the behavior and its context, but no denominator: you record the shakes that happened, never the shakes that didn't. <b>Team A does this for shakes</b>, which is why Team B's denominator matters.</p>
+
+  <h3>Scan sampling: snapshots on a schedule</h3>
+  <div class="fig"><svg viewBox="0 0 360 156" role="img" aria-label="Scan sampling takes instantaneous snapshots at fixed intervals">
+    <use href="#ptbase"/><use href="#ptshakes" opacity=".15"/>
+    <g stroke="#1A1A1A" stroke-width="1" stroke-dasharray="3 3">
+      <line x1="70" y1="16" x2="70" y2="140"/><line x1="130" y1="16" x2="130" y2="140"/><line x1="190" y1="16" x2="190" y2="140"/><line x1="250" y1="16" x2="250" y2="140"/><line x1="310" y1="16" x2="310" y2="140"/>
+    </g>
+    <g fill="#1A1A1A">
+      <circle cx="70" cy="30" r="3"/><circle cx="70" cy="62" r="3"/><circle cx="70" cy="94" r="3"/><circle cx="70" cy="126" r="3"/>
+      <circle cx="130" cy="30" r="3"/><circle cx="130" cy="62" r="3"/><circle cx="130" cy="94" r="3"/><circle cx="130" cy="126" r="3"/>
+      <circle cx="190" cy="30" r="3"/><circle cx="190" cy="62" r="3"/><circle cx="190" cy="94" r="3"/><circle cx="190" cy="126" r="3"/>
+      <circle cx="250" cy="30" r="3"/><circle cx="250" cy="62" r="3"/><circle cx="250" cy="94" r="3"/><circle cx="250" cy="126" r="3"/>
+      <circle cx="310" cy="30" r="3"/><circle cx="310" cy="62" r="3"/><circle cx="310" cy="94" r="3"/><circle cx="310" cy="126" r="3"/>
+    </g>
+  </svg></div>
+  <p class="figcap">At fixed intervals, record each animal's state at that instant (the dots). Cheap, scales to large groups, and builds accurate time budgets. But a one-second event is almost never under a scan line: every shake in this figure falls between scans. Scan sampling cannot study shakes, which is why we don't use it today.</p>
+
+  <p>Altmann also described <b>one-zero sampling</b> (did the behavior occur at all in each interval, yes or no) mostly to warn against it: the score depends on the interval length you happened to choose and estimates neither rate nor duration.</p>
+
+  <h3>Our design in these terms</h3>
+  <div class="mtabwrap"><table class="mtab">
+    <tr><th>Station</th><th>Method</th><th>What it gives us</th></tr>
+    <tr><td><b>Dogs</b> registry</td><td>Individual identification</td><td>Links every record to a known dog; repeat shakers; double-observer reliability</td></tr>
+    <tr><td><b>Team A</b> · Shake</td><td>All-occurrence sampling</td><td>Every shake plus its before/after context</td></tr>
+    <tr><td><b>Team B</b> · Focal</td><td>Focal-animal sampling</td><td>Baseline rate of behavior change; shake rate per dog-hour</td></tr>
+    <tr><td><b>Team C</b> · Gate</td><td>All-occurrence sampling at a predictable transition</td><td>Shake probability with a true denominator, plus latency and greeting-crowd size</td></tr>
+  </table></div>
+  <p style="font-size:13px; color:var(--gray)">Reference: Altmann, J. 1974. Observational study of behavior: sampling methods. <i>Behaviour</i> 49:227–267.</p>
+</section>
+
+<!-- ================= GUIDE ================= -->
+<section class="view guide" id="v-guide">
+  <div class="eyebrow">NC State Mammalogy · Field Lab</div>
+  <h2 class="viewtitle">The Shake-Off Study</h2>
+  <p class="sub">A dog-park test of a published claim, using the observation methods of primate field studies.</p>
+
+  <h3>The question</h3>
+  <p><b>Do shakes mark transitions between behaviors more often than chance?</b> Every dog owner has seen a dry dog do the full-body shake-off. Trainers and ethograms have labeled it a stress behavior for decades, yet only one study has ever measured what the behavior actually does in normal social life. The answer matters beyond dogs: animals from geese to macaques show short, stereotyped behaviors at moments of conflict or change, and knowing whether a shake flags "I am ending one activity and starting another" gives us a visible, countable marker of how an animal structures its own behavior. We can test this with an afternoon of careful observation, the same way primatologists test claims about scratching and yawning in monkeys.</p>
+
+  <h3>The study we are testing</h3>
+  <p>In 2024, Bryce, Nurkin, and Horowitz recorded 120 shakes from 96 dogs at a New York City dog run and daycare, and coded each dog's behavior for 10 seconds before and after the shake. Behavior differed across the shake in 107 of 120 events, and they concluded that shaking marks a transition between activities (<a href="https://www.mdpi.com/2076-2615/14/22/3248" target="_blank" rel="noopener"><i>Animals</i> 14:3248</a>, open access). They did not measure how often dog behavior changes across an ordinary 10-second window, so the study has no control sample. Today we collect that control and rerun their test properly.</p>
+
+  <h3>Your jobs</h3>
+  <ul>
+    <li><b>Everyone, first 20 minutes:</b> register the dogs already in the park, on the <b>Dogs</b> tab. Photograph each dog, ask the owner its name, age, and sex, and enter size and coat. The photos become the thumbnails every team uses to identify individuals. After that the gate team registers each new dog as it arrives.</li>
+    <li><b>Team A — Shake tab</b> (all-occurrence sampling): scan the whole park and record every shake you see, with the behavior just before, the behavior in the 10 s after, tail position, and dogs within 1 m. If you did not see what came before, tap Not seen; an honest blank beats a guess.</li>
+    <li><b>Team B — Focal tab</b> (focal sampling): pick a dog, code its behavior now, let the 10 s timer run, code its behavior at the beep, then pick a new dog and repeat. These windows measure the baseline rate of behavioral change, the control the original study lacks.</li>
+    <li><b>Team C — Gate tab:</b> every dog that enters is one trial. Start a stopwatch at leash-off and record whether it shakes within 5 minutes; you can run several timers at once when dogs arrive together. You are also the registry for arriving dogs, so photograph and add each new one while its clock runs. Arrival is the one big transition we can see coming, so this station gives a guaranteed, standardized sample no matter how few shakes the rest of the park produces.</li>
+  </ul>
+
+  <h3>Behavior categories</h3>
+  <dl class="cats">
+    <dt>Play</dt><dd>Reciprocal chase or wrestle, play bows, fetch games</dd>
+    <dt>Charged social</dt><dd>Fight, mounting, barking at a dog, unreciprocated play</dd>
+    <dt>Casual social</dt><dd>Sniffing or greeting another dog, walking toward or away from dogs</dd>
+    <dt>Person</dt><dd>Approaching, being petted, leashed, or watching a person</dd>
+    <dt>Self</dt><dd>Pee, poop, drink, scratch, roll, stretch, self-sniff</dd>
+    <dt>Alone</dt><dd>Standing still, walking or running alone, sniffing ground or air</dd>
+    <dt>Gate</dt><dd>Passing through the entry or exit</dd>
+  </dl>
+
+  <h3>Ground rules</h3>
+  <ul>
+    <li>Record only shakes you watched yourself. If two of you log the same shake, good: matched double-sightings measure our inter-observer reliability.</li>
+    <li>Do not call, touch, or follow the dogs. We are measuring their behavior, not changing it.</li>
+    <li>Set your observer name (top right) before your first record.</li>
+    <li>No signal? Keep recording. Entries queue on your phone and upload when the connection returns.</li>
+  </ul>
+
+  <h3>Where these methods come from</h3>
+  <p>All-occurrence sampling and focal sampling are the standard methods of primate field studies, defined by Jeanne Altmann in 1974 and used unchanged today. You are running the same protocol on an easier primate-watcher's subject: a fenced park full of habituated carnivores.</p>
+</section>
+
+<!-- ================= DOGS ================= -->
+<section class="view" id="v-dogs">
+  <div class="eyebrow">Step 1 · Registry</div>
+  <h2 class="viewtitle">Dog registry</h2>
+  <p class="sub">Photograph each dog as it arrives so every team can identify individuals. Ask the owner for name, age, and sex while you shoot.</p>
+
+  <div class="cardbox">
+    <div class="fgroup">
+      <div class="flabel">Photo <span class="hint">head or whole body, close as you can</span></div>
+      <input type="file" id="dphoto" accept="image/*" capture="environment">
+      <div id="dpreview" style="margin-top:8px"></div>
+    </div>
+    <div class="fgroup">
+      <div class="flabel">Name <span class="hint">from owner, or a nickname like “brindle boxer”</span></div>
+      <input type="text" id="dname" autocomplete="off" placeholder="e.g. Biscuit">
+    </div>
+    <div class="fgroup"><div class="flabel">Size</div><div class="btnrow" id="dsize"></div></div>
+    <div class="fgroup"><div class="flabel">Sex</div><div class="btnrow" id="dsex"></div></div>
+    <div class="fgroup"><div class="flabel">Age class</div><div class="btnrow" id="dage"></div></div>
+    <div class="fgroup"><div class="flabel">Coat length</div><div class="btnrow" id="dcoat"></div></div>
+    <button class="primary" id="dsave">Add dog</button>
+    <button class="ghost danger" id="ddelete" hidden style="width:100%; margin-top:8px">Delete this dog</button>
+  </div>
+
+  <h3 style="font-size:16px; margin-bottom:8px">Registered dogs <span class="num" id="dogcount"></span></h3>
+  <div class="doglist" id="doglist"></div>
+</section>
+
+<!-- ================= SHAKE ================= -->
+<section class="view" id="v-shake">
+  <div class="eyebrow">Team A · All-occurrence sampling</div>
+  <h2 class="viewtitle">Shake event</h2>
+  <p class="sub">The moment you see a shake, start here. Code what the dog was doing <b>as the shake began</b>, then watch 10 s and code what it does next.</p>
+
+  <div class="fgroup"><div class="flabel">Shake type</div><div class="btnrow" id="stype"></div></div>
+  <div class="fgroup">
+    <div class="flabel">Which dog? <span class="hint">tap thumbnail, or Unregistered</span></div>
+    <div class="dogpick" id="spick"></div>
+    <div id="ssizewrap" hidden style="margin-top:6px"><div class="flabel">Unregistered dog’s size <span class="hint">shown only because this dog has no registry entry</span></div><div class="btnrow" id="ssize"></div></div>
+  </div>
+  <div class="fgroup"><div class="flabel">Behavior BEFORE <span class="hint">at the instant the shake began</span></div><div class="btnrow" id="spre"></div></div>
+  <div class="timer" id="stimer"><div class="big num" id="stimeval">10</div><div class="tl"><b>Post-shake watch.</b> Starts when you pick the BEFORE behavior. Keep eyes on the dog; code AFTER at zero.</div></div>
+  <div class="fgroup"><div class="flabel">Behavior AFTER <span class="hint">what it is doing when the timer beeps at 10 s</span></div><div class="btnrow" id="spost"></div></div>
+  <div class="fgroup"><div class="flabel">Tail position</div>
+    <div class="ppr"><span class="ppl">Before</span><div class="btnrow" id="stailpre"></div></div>
+    <div class="ppr" style="margin-top:6px"><span class="ppl">After</span><div class="btnrow" id="stailpost"></div></div></div>
+  <div class="fgroup"><div class="flabel">Dogs within 1 m</div>
+    <div class="ppr"><span class="ppl">Before</span><div class="btnrow" id="snearpre"></div></div>
+    <div class="ppr" style="margin-top:6px"><span class="ppl">After</span><div class="btnrow" id="snearpost"></div></div></div>
+  <div class="fgroup"><div class="flabel">Obvious physical trigger? <span class="hint">wet, just rolled, person touching</span></div><div class="btnrow" id="scontact"></div></div>
+  <button class="primary" id="ssave">Save shake</button>
+  <div class="recents" id="srecent"></div>
+</section>
+
+<!-- ================= FOCAL ================= -->
+<section class="view" id="v-focal">
+  <div class="eyebrow">Team B · Focal sampling (control)</div>
+  <h2 class="viewtitle">Focal window</h2>
+  <p class="sub">Pick any dog. Code its behavior <b>now</b>; the 10 s timer runs; code what it is doing at the beep. Then pick a new dog and go again. The 10 s window matches the shake window exactly, which is what makes it a fair control.</p>
+
+  <div class="fgroup">
+    <div class="flabel">Focal dog</div>
+    <div class="dogpick" id="fpick"></div>
+    <div id="fsizewrap" hidden style="margin-top:6px"><div class="flabel">Unregistered dog’s size <span class="hint">shown only because this dog has no registry entry</span></div><div class="btnrow" id="fsize"></div></div>
+  </div>
+  <div class="fgroup"><div class="flabel">Behavior NOW <span class="hint">tapping starts the clock</span></div><div class="btnrow" id="fb0"></div></div>
+  <div class="timer" id="ftimer"><div class="big num" id="ftimeval">10</div><div class="tl"><b>Window running.</b> Watch your dog. At the beep, code what it is doing at that instant.</div></div>
+  <div class="fgroup"><div class="flabel">Behavior AT 10 s</div><div class="btnrow" id="fb20"></div></div>
+  <div class="fgroup"><div class="flabel">Did it shake during the window?</div><div class="btnrow" id="fshake"></div></div>
+  <button class="primary" id="fsave">Save window</button>
+  <div class="recents" id="frecent"></div>
+</section>
+
+<!-- ================= GATE ================= -->
+<section class="view" id="v-gate">
+  <div class="eyebrow">Team C · Gate station</div>
+  <h2 class="viewtitle">Gate entries</h2>
+  <p class="sub">Every entering dog is one trial: does it shake within 5 minutes of the leash coming off? Tap the button below the instant the leash comes off. Several dogs can be timed at once, so start a timer first and sort out the dog's details while the clock runs.</p>
+
+  <button class="primary" id="gnew">+ Dog just entered · start timer</button>
+  <p class="sub" style="margin-top:8px">You are also the registry for arriving dogs: attach each trial to a dog, adding it with <b>New dog</b> if it is not in the registry yet.</p>
+
+  <div id="gtrials"></div>
+  <div class="recents" id="grecent"></div>
+</section>
+
+<!-- ================= PERSONALITY ================= -->
+<section class="view guide" id="v-pers">
+  <div class="eyebrow">Individual differences</div>
+  <h2 class="viewtitle">Dog personalities</h2>
+  <p class="sub">Every dog in the park is doing the same things, in different proportions. Those proportions are what behavioral ecologists mean by personality.</p>
+
+  <h3>Personality is a measurement, not a metaphor</h3>
+  <p>When a biologist says an animal has a personality, the claim is specific and testable: individuals differ from each other consistently, and those differences hold up across time and situations. The informal version ("Rufus is the bold one") becomes science only when you measure the same individual repeatedly and show that it stays more bold than its neighbors.</p>
+  <p>Réale and colleagues (2007) organized the field around five axes that keep reappearing across species: <b>shyness-boldness</b> (response to risk), <b>exploration-avoidance</b> (response to novelty), <b>activity</b>, <b>aggressiveness</b>, and <b>sociability</b>. Our afternoon can touch sociability, activity, and a little of boldness.</p>
+
+  <h3>Repeatability is the whole ballgame</h3>
+  <p>The statistic that separates personality from noise is <b>repeatability</b>: the share of total behavioral variation that sits <i>among</i> individuals rather than <i>within</i> them. Watch one dog ten times and it will not behave identically; the question is whether its ten observations cluster tighter around its own average than around the park's average. A meta-analysis of 759 estimates across animals put average repeatability near 0.37, meaning roughly a third of behavioral variation is individual identity and two thirds is the moment.</p>
+
+  <h3>Traits travel in packages</h3>
+  <p>Sih and colleagues (2004) named a second pattern: behaviors correlate into <b>behavioral syndromes</b>. Bold animals tend also to be more exploratory, more active, and more aggressive. That matters because it means an animal cannot optimize each behavior separately; being bold enough to find food fast comes bundled with being bold enough to get eaten.</p>
+
+  <h3>This is well documented in wild animals</h3>
+  <ul>
+    <li><b>Great tits</b> in the Netherlands sort into fast and slow explorers. The difference is heritable, responds to artificial selection, and predicts survival differently in good and bad mast years.</li>
+    <li><b>Bighorn sheep</b> ewes differ consistently in boldness and docility, measured over years of repeated handling, and those differences predict how they use risky terrain.</li>
+    <li><b>Three-spined sticklebacks</b> and <b>Trinidadian guppies</b> show boldness syndromes that shift with how much predation their population has experienced.</li>
+    <li><b>Eastern chipmunks, dumpling squid, social spiders, and bluebirds</b> all have documented, repeatable individual differences.</li>
+  </ul>
+
+  <h3>Why this matters for wildlife monitoring</h3>
+  <p>Personality creates a sampling problem that reaches straight into camera trapping and live trapping. Bold, exploratory individuals approach novel objects sooner, so they walk in front of cameras and into traps at higher rates than shy ones. A sample of captured or photographed animals therefore over-represents one personality type, and estimates built from it, of density, of activity timing, of diet, inherit that bias. The effect has been measured directly: boldness predicts trappability in wild lizards, and different capture techniques select for different temperaments in the same population. Any detection model that assumes animals of a species are interchangeable is making an assumption this literature has shown to be false.</p>
+  <p>It also matters for conservation outcomes. Personality predicts which individuals disperse into new habitat, which ones persist in cities, and which ones end up in conflict with people. Translocation programs that move whichever animals are easiest to catch are, without meaning to, selecting on temperament.</p>
+
+  <h3>What we can and cannot claim today</h3>
+  <p>We will have a few observations per dog from one afternoon. That is enough to describe each dog's profile and to test whether the dogs differ more than sampling noise alone would produce. It is not enough to establish repeatability, because that needs the same dog measured on many separate occasions. Treat the profiles below as field sketches, and read the heterogeneity test as the real result.</p>
+
+  <h3>Do our dogs actually differ?</h3>
+  <div class="cardbox" id="p-hetero" style="font-size:14.5px">Waiting for focal data.</div>
+
+  <h3>The park's behavioral space</h3>
+  <div class="fig" id="p-space"><p class="sub">Waiting for focal data.</p></div>
+  <p class="figcap">Each dog placed by how social it was (horizontal) and how often its behavior changed within a window (vertical). This is the standard way behavioral syndromes are shown: a tilted cloud means the two traits are correlated and travel together. Read the horizontal axis as the more trustworthy one: with roughly ten windows per dog, each dog's switching rate carries about 13 percentage points of sampling error, so some of the vertical spread is noise rather than temperament. <span id="p-spacestat"></span></p>
+
+  <h3>Individual profiles</h3>
+  <p class="sub">Red shape is the dog, gray shape is the park average. Playful is a subset of Social, so those two axes move together by construction. A dog with few observations is flagged as thin data. Shake counts are printed on the card but are not an axis: a dozen shakes spread over the whole park leaves most dogs with none, which says nothing about the dog.</p>
+  <div class="fig" id="p-key" style="max-width:260px; margin-inline:auto"></div>
+  <p class="figcap" style="text-align:center">The four axes, named once. Each dog's card below uses this same shape.</p>
+  <div class="doglist" id="p-cards" style="margin-bottom:18px"></div>
+
+  <h3>A repeatability check you can run today</h3>
+  <div class="cardbox" id="p-repeat" style="font-size:14.5px">Waiting for focal data.</div>
+  <p style="font-size:13px; color:var(--gray)">Réale, D. et al. 2007. Integrating animal temperament within ecology and evolution. <i>Biological Reviews</i> 82:291-318. · Sih, A., Bell, A. &amp; Johnson, J.C. 2004. Behavioral syndromes: an ecological and evolutionary overview. <i>Trends in Ecology &amp; Evolution</i> 19:372-378. · Bell, A.M., Hankison, S.J. &amp; Laskowski, K.L. 2009. The repeatability of behaviour: a meta-analysis. <i>Animal Behaviour</i> 77:771-783.</p>
+</section>
+
+<!-- ================= RESULTS ================= -->
+<section class="view" id="v-results">
+  <div class="eyebrow">Picnic shelter</div>
+  <h2 class="viewtitle">Live results</h2>
+  <p class="sub">Refreshes from the shared dataset about every 10 s. The test: do shakes sit at behavioral transitions more often than Team B's random 20 s windows?</p>
+
+  <div style="display:flex; gap:10px; align-items:center; margin:0 0 14px; flex-wrap:wrap">
+    <button class="ghost" id="r-refresh">↻ Refresh data &amp; stats</button>
+    <span class="sub" id="r-upd" style="margin:0"></span>
+  </div>
+
+  <div class="stat2">
+    <div class="stat"><div class="v num" id="r-nshake">0</div><div class="l">shake events</div></div>
+    <div class="stat"><div class="v num" id="r-nfocal">0</div><div class="l">control windows</div></div>
+    <div class="stat"><div class="v num" id="r-ndogs">0</div><div class="l">dogs registered</div></div>
+    <div class="stat"><div class="v num" id="r-ngate">0</div><div class="l">gate entries</div></div>
+  </div>
+
+  <div class="verdict" id="r-verdict">Waiting for data.</div>
+  <p class="sub" id="r-dupnote"></p>
+
+  <h3 style="font-size:16px; margin-bottom:6px">The main test</h3>
+  <div class="fig" id="r-fig1"><p class="sub">Waiting for data.</p></div>
+  <p class="figcap">Percent of observation windows in which the dog's behavior category differed from the start of the window to 10 s later. Shake windows start at the shake; control windows start at an arbitrary moment in a focal follow. Both are 10 s long, so the two rates are directly comparable. Error bars are 95% confidence intervals (Wilson). Bryce et al. collected no random-window control; that third bar is what our class adds.</p>
+  <div class="cardbox" id="r-tests" style="font-size:14.5px">Statistics appear once both teams have data.</div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Transition matrix (shakes)</h3>
+  <p class="sub">Rows: behavior before the shake. Columns: after. Darker red = more events.</p>
+  <div class="hm" id="r-matrix"></div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">What were dogs doing when they shook?</h3>
+  <div class="fig" id="r-fig2"><p class="sub">Waiting for data.</p></div>
+  <p class="figcap">Red: the behavior underway at the instant each shake began (Team A). Gray: the behavior at the start of random focal windows (Team B), our estimate of how dogs at this park divide their time. A category whose red bar beats its gray bar precedes shakes more often than time budget alone predicts. <span id="r-fig2stat"></span></p>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Gate: how fast do entering dogs shake?</h3>
+  <div class="fig" id="r-fig3"><p class="sub">Waiting for data.</p></div>
+  <p class="figcap">Each entering dog is one trial, timed from leash-off. If arrival is the kind of transition shakes mark, most shaking should land in the early bins. <span id="r-fig3stat"></span></p>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Gate: does the greeting crowd matter?</h3>
+  <div class="fig" id="r-fig4"><p class="sub">Waiting for data.</p></div>
+  <p class="figcap">Share of entering dogs that shook within 5 minutes, split by how many dogs greeted them at the gate. If shakes track arousal, mobbed dogs should shake more. <span id="r-fig4stat"></span></p>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Side-by-side with Bryce et al. 2024</h3>
+  <p class="sub">Their published numbers, from <a href="https://www.mdpi.com/2076-2615/14/22/3248" target="_blank" rel="noopener">Animals 14:3248</a>, next to ours.</p>
+  <div class="mtabwrap"><table class="mtab">
+    <tr><th>Measure</th><th>Our park</th><th>Bryce et al. (NYC)</th></tr>
+    <tbody id="r-bryce"></tbody>
+  </table></div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Other measures</h3>
+  <div class="cardbox" id="r-secondary" style="font-size:14.5px"></div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Reliability</h3>
+  <div class="cardbox" id="r-rel" style="font-size:14.5px"></div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Shakes per dog</h3>
+  <div class="doglist" id="r-dogshakes" style="margin-bottom:16px"></div>
+
+  <h3 style="font-size:16px; margin-bottom:6px">Download CSV</h3>
+  <div class="btnrow" style="margin-bottom:20px">
+    <button class="ghost" data-csv="dogs">dogs.csv</button>
+    <button class="ghost" data-csv="shakes">shakes.csv</button>
+    <button class="ghost" data-csv="focals">focals.csv</button>
+    <button class="ghost" data-csv="gates">gates.csv</button>
+  </div>
+</section>
+</main>
+
+<nav class="tabs">
+  <a href="#methods" data-v="methods"><span class="ic">🔬</span>Methods</a>
+  <a href="#guide" data-v="guide"><span class="ic">📖</span>Study</a>
+  <a href="#dogs" data-v="dogs"><span class="ic">🐕</span>Dogs<span class="bdg" id="b-dogs" hidden></span></a>
+  <a href="#shake" data-v="shake"><span class="ic">💫</span>Shake<span class="bdg" id="b-shake" hidden></span></a>
+  <a href="#focal" data-v="focal"><span class="ic">⏱</span>Focal<span class="bdg" id="b-focal" hidden></span></a>
+  <a href="#gate" data-v="gate"><span class="ic">🚪</span>Gate<span class="bdg" id="b-gate" hidden></span></a>
+  <a href="#pers" data-v="pers"><span class="ic">🧭</span>Who</a>
+  <a href="#results" data-v="results"><span class="ic">📊</span>Results</a>
+</nav>
+
+<dialog id="obsdlg">
+  <h3 style="margin-bottom:8px">Who is observing?</h3>
+  <p class="sub">First name + last initial. Stamped on every record from this phone.</p>
+  <input type="text" id="obsname" autocomplete="off" placeholder="e.g. Maya R">
+  <button class="primary" id="obsok" style="margin-top:12px">Start observing</button>
+</dialog>
+
+<dialog id="qdogdlg">
+  <h3 style="margin-bottom:8px">Add the dog that just entered</h3>
+  <p class="sub">Name and photo now; size, sex and coat can be filled in on the Dogs tab later.</p>
+  <input type="file" id="qdphoto" accept="image/*" capture="environment">
+  <div id="qdpreview" style="margin:8px 0"></div>
+  <input type="text" id="qdname" autocomplete="off" placeholder="Name or description">
+  <button class="primary" id="qdsave" style="margin-top:12px">Add and attach</button>
+  <button class="ghost" id="qdcancel" style="width:100%; margin-top:8px">Cancel</button>
+</dialog>
+
+<dialog id="qrdlg">
+  <h3 style="margin-bottom:8px">Scan to join</h3>
+  <div id="qrbox"></div>
+  <button class="ghost" id="qrclose" style="width:100%; margin-top:10px">Close</button>
+</dialog>
+
+<script>
+"use strict";
+/* =================== CONFIG =================== */
+/* Paste your Apps Script web app URL between the quotes (SETUP.md, step 4). */
+const WEBAPP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+/* ARCHIVE SWITCH. true = read-only: no observer name is asked for, every data
+   entry control is disabled, and nothing can be sent. The page still displays
+   the dataset and all the explanation tabs. */
+const FROZEN = false;
+
+/* Optional, for a permanent archive with no dependency on Google at all.
+   Open your web app URL with ?mode=data on the end in a browser, copy the whole
+   JSON response, and paste it between the parentheses below, replacing null.
+   The page then reads that snapshot and never contacts the endpoint, so you can
+   archive the Apps Script deployment entirely. */
+const ARCHIVE_DATA = null;
+/* ============================================== */
+
+const CATS = [
+  ["PLAY","Play"],["CHG","Charged social"],["CAS","Casual social"],
+  ["PER","Person"],["SELF","Self"],["ALN","Alone"],["GATE","Gate"]
+];
+const CATL = Object.fromEntries(CATS); CATL.NS = "Not seen";
+const SIZES=[["XS","XS"],["S","S"],["M","M"],["L","L"],["XL","XL"]];
+const $=id=>document.getElementById(id);
+
+const S = {
+  dogs:new Map(), shakes:[], focals:[], gates:[],
+  obs:null, outbox:[], pendingPhoto:{}, online:false,
+  shake:{type:null,dog:null,usize:null,pre:null,post:null,tailPre:null,tailPost:null,nearPre:null,nearPost:null,contact:null},
+  focal:{dog:null,usize:null,b0:null,b20:null,shook:null,t0:null},
+  trials:[],
+  editDog:null, dogPhoto:null
+};
+try{ S.obs = localStorage.getItem("pt_obs") || null; }catch(e){}
+try{ S.outbox = JSON.parse(localStorage.getItem("pt_outbox")||"[]"); }catch(e){ S.outbox=[]; }
+
+/* ---------- helpers ---------- */
+function toast(msg, warn){
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+  if(warn) t.style.background="var(--darkred)";
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity="0";},1800); setTimeout(()=>t.remove(),2200);
+}
+function uid(){ return (crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9\-]/g,""); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function beep(){
+  try{
+    const ac = beep.ctx || (beep.ctx = new (window.AudioContext||window.webkitAudioContext)());
+    if(ac.state==="suspended") ac.resume();
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.frequency.value=880; g.gain.value=.15; o.connect(g); g.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime+.25);
+  }catch(e){}
+}
+function group(elId, opts, obj, key, oncb){
+  const el=$(elId); el.innerHTML="";
+  opts.forEach(([val,label])=>{
+    const b=document.createElement("button"); b.type="button"; b.className="opt"; b.textContent=label; b.dataset.v=val;
+    b.addEventListener("click",()=>{
+      obj[key] = (obj[key]===val && !oncb) ? null : val;
+      [...el.children].forEach(c=>c.classList.toggle("sel", c.dataset.v===obj[key]));
+      if(oncb) oncb(val);
+    });
+    el.appendChild(b);
+  });
+}
+function selGroup(elId,val){ [...$(elId).children].forEach(c=>c.classList.toggle("sel",c.dataset.v===val)); }
+
+/* ---------- navigation ---------- */
+const VIEWS=["methods","guide","dogs","shake","focal","gate","pers","results"];
+function show(v){
+  if(!VIEWS.includes(v)) v="methods";
+  VIEWS.forEach(x=>$("v-"+x).classList.toggle("on",x===v));
+  document.querySelectorAll("nav.tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===v));
+}
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+show(location.hash.slice(1)||"methods");
+
+/* ---------- observer identity ---------- */
+function askObs(){ $("obsname").value=S.obs||""; $("obsdlg").showModal(); }
+$("obsok").addEventListener("click",()=>{
+  const v=$("obsname").value.trim(); if(!v){ toast("Enter a name",true); return; }
+  S.obs=v; try{localStorage.setItem("pt_obs",v);}catch(e){}
+  $("obschip").textContent=v; $("obsdlg").close();
+});
+$("obschip").addEventListener("click",askObs);
+if(S.obs) $("obschip").textContent=S.obs; else if(!FROZEN) setTimeout(askObs,500);
+
+/* ---------- QR ---------- */
+$("qrchip").addEventListener("click",()=>{
+  const box=$("qrbox"); box.innerHTML="";
+  const url=location.origin+location.pathname;
+  if(typeof QRCode!=="undefined"){ new QRCode(box,{text:url,width:220,height:220}); } else { box.textContent=url; }
+  $("qrdlg").showModal();
+});
+$("qrclose").addEventListener("click",()=>$("qrdlg").close());
+
+/* ---------- network layer ---------- */
+const configured = !/PASTE_YOUR/.test(WEBAPP_URL);
+if(!configured){
+  const b=$("cfgbanner"); b.hidden=false;
+  b.textContent="Setup needed: paste your Apps Script web app URL into the CONFIG line at the top of this file's script (see SETUP.md). Until then, records queue on this phone only.";
+}
+async function api(body){ // POST as text/plain: a "simple request", no CORS preflight
+  const r=await fetch(WEBAPP_URL,{method:"POST",body:JSON.stringify(body)});
+  let j=null; try{ j=await r.json(); }catch(e){}
+  if(j && j.ok===false) throw new Error(j.error||"server error");
+  if(!j && !r.ok) throw new Error("network");
+  return j||{ok:true};
+}
+function persistOutbox(){ try{localStorage.setItem("pt_outbox",JSON.stringify(S.outbox));}catch(e){} }
+function syncUI(){
+  const c=$("syncchip");
+  if(FROZEN){ c.textContent="Archived"; c.classList.remove("warnc"); return; }
+  if(S.outbox.length){ c.textContent=S.outbox.length+" queued"; c.classList.add("warnc"); }
+  else if(S.online){ c.textContent="synced "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); c.classList.remove("warnc"); }
+  else { c.textContent="offline"; c.classList.add("warnc"); }
+}
+async function send(body, optimistic){
+  if(FROZEN){ toast("Archived: this dataset is closed",true); return; }
+  if(optimistic) optimistic(); // local echo so the UI moves immediately
+  if(!configured){ S.outbox.push(body); persistOutbox(); syncUI(); return; }
+  try{ const res=await api(body); S.online=true; syncUI(); schedulePoll(1500); return res; }
+  catch(e){ S.outbox.push(body); persistOutbox(); S.online=false; syncUI(); toast("No connection: queued on this phone",true); }
+}
+async function flushOutbox(){
+  if(!configured || !S.outbox.length) return;
+  const q=S.outbox.slice(); let done=0;
+  for(const item of q){
+    try{ await api(item); done++; S.outbox=S.outbox.filter(x=>x!==item); }
+    catch(e){ break; }
+  }
+  if(done){ persistOutbox(); syncUI(); toast(done+" queued record"+(done>1?"s":"")+" synced"); schedulePoll(1500); }
+}
+if(!FROZEN) setInterval(flushOutbox,15000);
+
+/* polling the shared dataset */
+let pollTimer=null;
+function schedulePoll(ms){ clearTimeout(pollTimer); pollTimer=setTimeout(poll, ms||0); }
+function loadSnapshot(d){
+  S.dogs=new Map((d.dogs||[]).map(x=>[String(x.id),x]));
+  S.shakes=(d.shakes||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+  S.focals=(d.focals||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+  S.gates=(d.gates||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+  renderDogs(); renderResults(); renderRecents();
+}
+async function poll(){
+  clearTimeout(pollTimer);
+  if(ARCHIVE_DATA){ loadSnapshot(ARCHIVE_DATA); S.online=true; syncUI(); return; }
+  pollTimer=setTimeout(poll, 10000);
+  if(!configured) return;
+  try{
+    const r=await fetch(WEBAPP_URL+"?mode=data"); const d=await r.json();
+    if(!d || d.ok===false) throw new Error("bad payload");
+    S.online=true;
+    S.dogs=new Map((d.dogs||[]).map(x=>[String(x.id),x]));
+    S.shakes=(d.shakes||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+    S.focals=(d.focals||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+    S.gates=(d.gates||[]).slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+    renderDogs(); renderResults(); renderRecents(); syncUI();
+    const u=$("r-upd"); if(u) u.textContent="data as of "+new Date().toLocaleTimeString();
+  }catch(e){ S.online=false; syncUI(); }
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ flushOutbox(); schedulePoll(0); } });
+schedulePoll(0); syncUI();
+
+/* ---------- dog registry ---------- */
+const dogForm={size:null,sex:null,age:null,coat:null};
+group("dsize",SIZES,dogForm,"size");
+group("dsex",[["M","Male"],["F","Female"],["U","Unknown"]],dogForm,"sex");
+group("dage",[["PUP","Puppy"],["AD","Adult"],["SEN","Senior"],["U","Unknown"]],dogForm,"age");
+group("dcoat",[["SHORT","Short"],["MED","Medium"],["LONG","Long"]],dogForm,"coat");
+
+$("dphoto").addEventListener("change",async ev=>{
+  const f=ev.target.files && ev.target.files[0]; if(!f) return;
+  try{
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(f); });
+    const m=240, r=Math.min(m/img.width,m/img.height,1), w=Math.round(img.width*r), h=Math.round(img.height*r);
+    const c=document.createElement("canvas"); c.width=w; c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    S.dogPhoto=c.toDataURL("image/jpeg",0.6);
+    URL.revokeObjectURL(img.src);
+    $("dpreview").innerHTML='<img src="'+S.dogPhoto+'" alt="dog photo preview" style="width:110px;height:110px;object-fit:cover;border-radius:10px">';
+  }catch(e){ toast("Could not read photo",true); }
+});
+
+function loadDogIntoForm(d){
+  S.editDog=String(d.id); S.dogPhoto=null;
+  $("dname").value=d.name||"";
+  dogForm.size=d.size||null; dogForm.sex=d.sex||null; dogForm.age=d.age||null; dogForm.coat=d.coat||null;
+  selGroup("dsize",dogForm.size); selGroup("dsex",dogForm.sex); selGroup("dage",dogForm.age); selGroup("dcoat",dogForm.coat);
+  const src=d.photoUrl||S.pendingPhoto[String(d.id)];
+  $("dpreview").innerHTML = src?'<img src="'+esc(src)+'" alt="dog photo" style="width:110px;height:110px;object-fit:cover;border-radius:10px">':"";
+  $("dsave").textContent="Update dog"; $("ddelete").hidden=false;
+  location.hash="dogs"; window.scrollTo({top:0});
+}
+function resetDogForm(){
+  S.editDog=null; S.dogPhoto=null; $("dname").value=""; $("dphoto").value=""; $("dpreview").innerHTML="";
+  ["size","sex","age","coat"].forEach(k=>dogForm[k]=null);
+  ["dsize","dsex","dage","dcoat"].forEach(id=>selGroup(id,null));
+  $("dsave").textContent="Add dog"; $("ddelete").hidden=true;
+}
+$("dsave").addEventListener("click",async ()=>{
+  const name=$("dname").value.trim();
+  if(!name && !S.dogPhoto){ toast("Add a photo or a name",true); return; }
+  const id=S.editDog||uid();
+  const row={ id, name:name||"(unnamed)", size:dogForm.size, sex:dogForm.sex, age:dogForm.age, coat:dogForm.coat,
+              observer:S.obs||"", epoch_ms:Date.now(), timestamp:new Date().toISOString() };
+  if(S.dogPhoto) S.pendingPhoto[id]=S.dogPhoto;
+  send({action:"addDog", row, photo:S.dogPhoto||null}, ()=>{
+    S.dogs.set(id,Object.assign({photoUrl:null},row)); renderDogs();
+  });
+  resetDogForm(); toast("Dog saved");
+});
+$("ddelete").addEventListener("click",()=>{
+  if(!S.editDog) return;
+  const id=S.editDog;
+  send({action:"delete", table:"dogs", id}, ()=>{ S.dogs.delete(id); renderDogs(); });
+  resetDogForm(); toast("Dog deleted");
+});
+
+function dogLabel(id){ const d=S.dogs.get(String(id)); return d?d.name:"?"; }
+function thumb(d,cls){
+  const src=d.photoUrl||S.pendingPhoto[String(d.id)];
+  return src?'<img src="'+esc(src)+'" alt="" loading="lazy">':'<div class="ph">🐕</div>';
+}
+function renderDogs(){
+  $("dogcount").textContent = S.dogs.size? "("+S.dogs.size+")" : "";
+  const list=$("doglist");
+  if(!S.dogs.size){ list.innerHTML='<p class="sub">No dogs yet. The registry fills this grid as each phone adds one.</p>'; }
+  else{
+    list.innerHTML="";
+    [...S.dogs.values()].sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0)).forEach(d=>{
+      const el=document.createElement("div"); el.className="dl";
+      el.innerHTML=thumb(d)+'<div class="nm">'+esc(d.name)+'</div><div class="mt">'+[d.size,d.sex,d.age,d.coat].filter(Boolean).join(" · ")+'</div>';
+      el.addEventListener("click",()=>loadDogIntoForm(d));
+      list.appendChild(el);
+    });
+  }
+  renderPickers();
+  if(typeof renderTrials==="function") renderTrials();
+}
+
+/* dog pickers on the field forms */
+function renderPickers(){
+  [["spick",S.shake,"ssizewrap"],["fpick",S.focal,"fsizewrap"]].forEach(([pid,obj,sid])=>{
+    const el=$(pid); el.innerHTML="";
+    const mk=(id,html,label)=>{
+      const c=document.createElement("div"); c.className="dcard"+(obj.dog===id?" sel":"");
+      c.innerHTML=html+'<div class="nm">'+esc(label)+'</div>';
+      c.addEventListener("click",()=>{
+        obj.dog = obj.dog===id? null : id;
+        $(sid).hidden = obj.dog!=="UNREG";
+        renderPickers();
+      });
+      el.appendChild(c);
+    };
+    mk("UNREG",'<div class="ph">?</div>',"Unregistered");
+    [...S.dogs.values()].sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0)).forEach(d=>mk(String(d.id),thumb(d),d.name));
+  });
+}
+group("ssize",SIZES,S.shake,"usize");
+group("fsize",SIZES,S.focal,"usize");
+
+/* ---------- shake form ---------- */
+let sTimerId=null;
+group("stype",[["FULL","Full body"],["HEAD","Head only"]],S.shake,"type");
+group("spre",CATS.concat([["NS","Not seen"]]),S.shake,"pre",v=>{
+  S.shake.pre=v; selGroup("spre",v);
+  clearInterval(sTimerId); let left=10; const tv=$("stimeval"), tm=$("stimer");
+  tm.classList.add("go"); tm.classList.remove("done"); tv.textContent=left;
+  sTimerId=setInterval(()=>{ left--; tv.textContent=left;
+    if(left<=0){ clearInterval(sTimerId); tm.classList.remove("go"); tm.classList.add("done"); tv.textContent="✓"; beep(); } },1000);
+});
+group("spost",CATS.concat([["NS","Lost sight"]]),S.shake,"post",v=>{S.shake.post=v; selGroup("spost",v);});
+group("stailpre",[["LOW","Low ↓"],["NEU","Neutral →"],["HIGH","High ↑"],["NS","Not seen"]],S.shake,"tailPre",v=>{S.shake.tailPre=v;selGroup("stailpre",v);});
+group("stailpost",[["LOW","Low ↓"],["NEU","Neutral →"],["HIGH","High ↑"],["NS","Not seen"]],S.shake,"tailPost",v=>{S.shake.tailPost=v;selGroup("stailpost",v);});
+group("snearpre",[["0","0"],["1","1"],["2","2"],["3","3+"]],S.shake,"nearPre",v=>{S.shake.nearPre=v;selGroup("snearpre",v);});
+group("snearpost",[["0","0"],["1","1"],["2","2"],["3","3+"]],S.shake,"nearPost",v=>{S.shake.nearPost=v;selGroup("snearpost",v);});
+group("scontact",[["N","No"],["Y","Yes"],["NS","Not sure"]],S.shake,"contact",v=>{S.shake.contact=v;selGroup("scontact",v);});
+
+$("ssave").addEventListener("click",()=>{
+  const s=S.shake;
+  if(!s.type||!s.pre||!s.post){ toast("Need shake type + before + after",true); return; }
+  const row={ id:uid(), dogId:(s.dog&&s.dog!=="UNREG")?s.dog:null, unregSize:s.dog==="UNREG"?s.usize:null,
+    type:s.type, pre:s.pre, post:s.post, tailPre:s.tailPre, tailPost:s.tailPost, nearPre:s.nearPre, nearPost:s.nearPost,
+    contact:s.contact, observer:S.obs||"", epoch_ms:Date.now(), timestamp:new Date().toISOString() };
+  send({action:"add", table:"shakes", row}, ()=>{ S.shakes.push(row); renderResults(); renderRecents(); });
+  Object.keys(s).forEach(k=>s[k]=null);
+  ["stype","spre","spost","stailpre","stailpost","snearpre","snearpost","scontact"].forEach(g=>selGroup(g,null));
+  $("ssizewrap").hidden=true; clearInterval(sTimerId);
+  $("stimer").classList.remove("go","done"); $("stimeval").textContent="10";
+  renderPickers(); toast("Shake saved"); window.scrollTo({top:0});
+});
+
+/* ---------- focal form ---------- */
+let fTimerId=null;
+group("fb0",CATS,S.focal,"b0",v=>{
+  S.focal.b0=v; selGroup("fb0",v); S.focal.t0=Date.now();
+  clearInterval(fTimerId); let left=10; const tv=$("ftimeval"), tm=$("ftimer");
+  tm.classList.add("go"); tm.classList.remove("done"); tv.textContent=left;
+  fTimerId=setInterval(()=>{ left--; tv.textContent=left;
+    if(left<=0){ clearInterval(fTimerId); tm.classList.remove("go"); tm.classList.add("done"); tv.textContent="✓"; beep(); } },1000);
+});
+group("fb20",CATS.concat([["NS","Lost sight"]]),S.focal,"b20",v=>{S.focal.b20=v;selGroup("fb20",v);});
+group("fshake",[["N","No"],["Y","Yes"]],S.focal,"shook",v=>{S.focal.shook=v;selGroup("fshake",v);});
+
+$("fsave").addEventListener("click",()=>{
+  const f=S.focal;
+  if(!f.b0||!f.b20){ toast("Need NOW + 10 s behaviors",true); return; }
+  const row={ id:uid(), dogId:(f.dog&&f.dog!=="UNREG")?f.dog:null, unregSize:f.dog==="UNREG"?f.usize:null,
+    b0:f.b0, b20:f.b20, shookDuring:f.shook||"N", observer:S.obs||"", epoch_ms:f.t0||Date.now(), timestamp:new Date().toISOString() };
+  send({action:"add", table:"focals", row}, ()=>{ S.focals.push(row); renderResults(); renderRecents(); });
+  Object.keys(f).forEach(k=>f[k]=null);
+  ["fb0","fb20","fshake"].forEach(g=>selGroup(g,null));
+  $("fsizewrap").hidden=true; clearInterval(fTimerId);
+  $("ftimer").classList.remove("go","done"); $("ftimeval").textContent="10";
+  renderPickers(); toast("Window saved"); window.scrollTo({top:0});
+});
+
+/* ---------- gate station: several stopwatches at once ---------- */
+const GATE_MAX = 6;            // concurrent trials one team can realistically track
+const GATE_WINDOW = 300;       // seconds before "no shake" can be recorded
+
+function fmtClock(sec){
+  return sec < 60 ? sec.toFixed(1)
+                  : Math.floor(sec/60)+":"+String(Math.floor(sec%60)).padStart(2,"0");
+}
+function trialById(id){ return S.trials.find(t=>t.id===id); }
+
+$("gnew").addEventListener("click",()=>{
+  if(S.trials.length >= GATE_MAX){ toast("Finish a trial before starting another",true); return; }
+  S.trials.push({ id:uid(), started:Date.now(), dog:null, usize:null,
+                  greeters:null, outcome:null, latency:null });
+  renderTrials(); beep();
+});
+
+function renderTrials(){
+  const host=$("gtrials");
+  if(!S.trials.length){
+    host.innerHTML='<p class="sub" style="margin-top:14px">No timers running. Tap the button above the moment a leash comes off.</p>';
+    return;
+  }
+  host.innerHTML="";
+  S.trials.forEach(t=>{
+    const el=document.createElement("div");
+    el.className="trial"+(t.outcome?" done":"");
+    el.dataset.id=t.id;
+    const dogName = t.dog && t.dog!=="UNREG" ? dogLabel(t.dog)
+                  : (t.dog==="UNREG" ? "Unregistered" : "no dog attached");
+    el.innerHTML =
+      '<div class="thead">'
+      +  '<span class="tclock num" data-clock="'+t.id+'">'+fmtClock((Date.now()-t.started)/1000)+'</span>'
+      +  '<span class="tstate">'+(t.outcome==="Y" ? "shook at "+t.latency+" s"
+                                 : t.outcome==="N" ? "no shake in 5 min"
+                                 : t.outcome==="LOST" ? "lost sight"
+                                 : "running")+'</span>'
+      +  '<button class="ghost danger tdiscard" type="button">Discard</button>'
+      +'</div>'
+      +'<div class="tlabel">Dog: <b>'+esc(dogName)+'</b></div>'
+      +'<div class="dogpick tpick"></div>'
+      +'<div class="tsizewrap" hidden><div class="tlabel">Unregistered dog\u2019s size</div><div class="btnrow tsize"></div></div>'
+      +'<div class="tlabel" style="margin-top:8px">Dogs greeting it at the gate</div>'
+      +'<div class="btnrow tgreet"></div>'
+      +'<div class="btnrow tacts" style="margin-top:10px">'
+      +  '<button class="opt tshook" type="button" style="flex:1"'+(t.outcome?" disabled":"")+'>SHOOK</button>'
+      +  '<button class="opt tnone" type="button" style="flex:1"'+(t.outcome?" disabled":"")+'>No shake</button>'
+      +  '<button class="opt tlost" type="button" style="flex:1"'+(t.outcome?" disabled":"")+'>Lost sight</button>'
+      +'</div>'
+      +'<button class="primary tsave" type="button" style="margin-top:10px"'+(t.outcome?"":" disabled")+'>Save this entry</button>';
+
+    // dog picker for this trial
+    const pick=el.querySelector(".tpick");
+    const mk=(id,html,label)=>{
+      const c=document.createElement("div");
+      c.className="dcard"+(t.dog===id?" sel":"");
+      c.innerHTML=html+'<div class="nm">'+esc(label)+'</div>';
+      c.addEventListener("click",()=>{
+        t.dog = t.dog===id ? null : id;
+        renderTrials();
+      });
+      pick.appendChild(c);
+    };
+    const add=document.createElement("div");
+    add.className="dcard";
+    add.innerHTML='<div class="ph">+</div><div class="nm">New dog</div>';
+    add.addEventListener("click",()=>openQuickDog(t.id));
+    pick.appendChild(add);
+    mk("UNREG",'<div class="ph">?</div>',"Unregistered");
+    [...S.dogs.values()].sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0))
+      .forEach(d=>mk(String(d.id),thumb(d),d.name));
+
+    // unregistered size
+    const sw=el.querySelector(".tsizewrap");
+    sw.hidden = t.dog!=="UNREG";
+    const sz=el.querySelector(".tsize");
+    SIZES.forEach(([v,lab])=>{
+      const b=document.createElement("button");
+      b.type="button"; b.className="opt small"+(t.usize===v?" sel":""); b.textContent=lab;
+      b.addEventListener("click",()=>{ t.usize = t.usize===v?null:v; renderTrials(); });
+      sz.appendChild(b);
+    });
+
+    // greeters
+    const gr=el.querySelector(".tgreet");
+    [["0","0"],["1","1"],["2","2"],["3","3+"]].forEach(([v,lab])=>{
+      const b=document.createElement("button");
+      b.type="button"; b.className="opt small"+(t.greeters===v?" sel":""); b.textContent=lab;
+      b.addEventListener("click",()=>{ t.greeters = t.greeters===v?null:v; renderTrials(); });
+      gr.appendChild(b);
+    });
+
+    el.querySelector(".tshook").addEventListener("click",()=>{
+      t.outcome="Y"; t.latency=Math.round((Date.now()-t.started)/10)/100;
+      renderTrials(); beep();
+    });
+    el.querySelector(".tnone").addEventListener("click",()=>{
+      const s=(Date.now()-t.started)/1000;
+      if(s < GATE_WINDOW){
+        toast("Wait until 5:00, or use Lost sight",true); return;
+      }
+      t.outcome="N"; t.latency=null; renderTrials();
+    });
+    el.querySelector(".tlost").addEventListener("click",()=>{
+      t.outcome="LOST"; t.latency=null; renderTrials();
+    });
+    el.querySelector(".tdiscard").addEventListener("click",()=>{
+      S.trials=S.trials.filter(x=>x.id!==t.id); renderTrials(); toast("Timer discarded");
+    });
+    el.querySelector(".tsave").addEventListener("click",()=>{
+      if(!t.outcome){ toast("Record the outcome first",true); return; }
+      const row={ id:t.id,
+        dogId:(t.dog&&t.dog!=="UNREG")?t.dog:null,
+        unregSize:t.dog==="UNREG"?t.usize:null,
+        shook:t.outcome, latencySec:t.latency, greeters:t.greeters,
+        observer:S.obs||"", epoch_ms:t.started, timestamp:new Date(t.started).toISOString() };
+      send({action:"add", table:"gates", row}, ()=>{ S.gates.push(row); renderResults(); renderRecents(); });
+      S.trials=S.trials.filter(x=>x.id!==t.id);
+      renderTrials(); toast("Entry saved");
+    });
+
+    host.appendChild(el);
+  });
+}
+
+// one ticker drives every running clock
+setInterval(()=>{
+  S.trials.forEach(t=>{
+    if(t.outcome) return;
+    const el=document.querySelector('[data-clock="'+t.id+'"]');
+    if(el){
+      const s=(Date.now()-t.started)/1000;
+      el.textContent=fmtClock(s);
+      if(s>=GATE_WINDOW) el.classList.add("over");
+    }
+  });
+},100);
+
+/* quick-add a dog from a gate trial */
+let quickFor=null, quickPhoto=null;
+function openQuickDog(trialId){
+  quickFor=trialId; quickPhoto=null;
+  $("qdname").value=""; $("qdphoto").value=""; $("qdpreview").innerHTML="";
+  $("qdogdlg").showModal();
+}
+$("qdphoto").addEventListener("change",async ev=>{
+  const f=ev.target.files && ev.target.files[0]; if(!f) return;
+  try{
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(f); });
+    const m=240, r=Math.min(m/img.width,m/img.height,1), w=Math.round(img.width*r), h=Math.round(img.height*r);
+    const c=document.createElement("canvas"); c.width=w; c.height=h;
+    c.getContext("2d").drawImage(img,0,0,w,h);
+    quickPhoto=c.toDataURL("image/jpeg",0.6);
+    URL.revokeObjectURL(img.src);
+    $("qdpreview").innerHTML='<img src="'+quickPhoto+'" alt="" style="width:96px;height:96px;object-fit:cover;border-radius:10px">';
+  }catch(e){ toast("Could not read photo",true); }
+});
+$("qdsave").addEventListener("click",()=>{
+  const name=$("qdname").value.trim();
+  if(!name && !quickPhoto){ toast("Add a photo or a name",true); return; }
+  const id=uid();
+  const row={ id, name:name||"(unnamed)", size:null, sex:null, age:null, coat:null,
+              observer:S.obs||"", epoch_ms:Date.now(), timestamp:new Date().toISOString() };
+  if(quickPhoto) S.pendingPhoto[id]=quickPhoto;
+  send({action:"addDog", row, photo:quickPhoto||null}, ()=>{
+    S.dogs.set(id,Object.assign({photoUrl:null},row)); renderDogs();
+  });
+  const t=trialById(quickFor);
+  if(t) t.dog=id;
+  $("qdogdlg").close();
+  renderTrials(); renderPickers();
+  toast("Dog added. Fill in size and sex on the Dogs tab when there is time.");
+});
+$("qdcancel").addEventListener("click",()=>$("qdogdlg").close());
+
+/* ---------- recents (my last 3 per form, with delete) ---------- */
+function recentHTML(title, rows, coll){
+  let h='<h3>'+title+'</h3>';
+  if(!rows.length) return h+'<p class="sub">None from this phone yet.</p>';
+  rows.forEach(r=>{
+    h+='<div class="rrow"><div class="rmeta"><div>'+r.line1+'</div><div class="r2">'+r.line2+'</div></div>'
+      +'<button class="ghost danger" data-del="'+coll+':'+esc(r.id)+'">Delete</button></div>';
+  });
+  return h;
+}
+function tstr(x){ const t=+x.epoch_ms; return t?new Date(t).toLocaleTimeString():""; }
+function renderRecents(){
+  const mine=a=>a.filter(x=>x.observer===(S.obs||"")).slice(-3).reverse();
+  $("srecent").innerHTML=recentHTML("My recent shakes", mine(S.shakes).map(x=>({id:x.id,
+    line1:(x.dogId?esc(dogLabel(x.dogId)):"Unregistered")+" · "+(CATL[x.pre]||x.pre)+" → "+(CATL[x.post]||x.post),
+    line2:(x.type==="FULL"?"Full":"Head")+" · "+tstr(x)})),"shakes");
+  $("frecent").innerHTML=recentHTML("My recent windows", mine(S.focals).map(x=>({id:x.id,
+    line1:(x.dogId?esc(dogLabel(x.dogId)):"Unregistered")+" · "+(CATL[x.b0]||x.b0)+" → "+(CATL[x.b20]||x.b20),
+    line2:(x.shookDuring==="Y"?"shook · ":"")+tstr(x)})),"focals");
+  $("grecent").innerHTML=recentHTML("My recent entries", mine(S.gates).map(x=>({id:x.id,
+    line1:(x.dogId?esc(dogLabel(x.dogId)):"Unregistered")+" · "+(x.shook==="Y"?("shook at "+x.latencySec+" s"):x.shook==="LOST"?"lost sight":"no shake"),
+    line2:tstr(x)})),"gates");
+}
+document.addEventListener("click",ev=>{
+  const t=ev.target.closest("[data-del]"); if(!t) return;
+  const i=t.dataset.del.indexOf(":"), coll=t.dataset.del.slice(0,i), id=t.dataset.del.slice(i+1);
+  send({action:"delete", table:coll, id}, ()=>{
+    S[coll]=S[coll].filter(x=>String(x.id)!==String(id)); renderResults(); renderRecents();
+  });
+  toast("Deleted");
+});
+
+/* ---------- stats ---------- */
+function phi(z){ // standard normal CDF (Abramowitz & Stegun 26.2.17)
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989422804014327*Math.exp(-z*z/2);
+  const p=d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  return z>0?1-p:p;
+}
+function twoProp(k1,n1,k2,n2){
+  if(n1<1||n2<1) return null;
+  const p1=k1/n1,p2=k2/n2,p=(k1+k2)/(n1+n2);
+  const se=Math.sqrt(p*(1-p)*(1/n1+1/n2));
+  if(!se) return {p1,p2,z:0,pval:1};
+  const z=(p1-p2)/se;
+  return {p1,p2,z,pval:2*(1-phi(Math.abs(z)))};
+}
+function fmtP(p){ return p<0.001?"p < 0.001":"p = "+p.toFixed(3); }
+function wilson(k,n){ // 95% Wilson score interval for a proportion
+  if(!n) return null;
+  const z=1.96,p=k/n,d=1+z*z/n;
+  const c=(p+z*z/(2*n))/d, h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;
+  return [Math.max(0,c-h),Math.min(1,c+h)];
+}
+function chiP(x,df){ // upper-tail chi-square p, Wilson-Hilferty normal approximation
+  if(x<=0||df<1) return 1;
+  const t=Math.cbrt(x/df), m=1-2/(9*df), s=Math.sqrt(2/(9*df));
+  return Math.max(0,Math.min(1,1-phi((t-m)/s)));
+}
+function chi2Table(rows){ // contingency chi-square; zero-total columns dropped
+  const C=rows[0].length, R=rows.length;
+  const rs=rows.map(r=>r.reduce((a,b)=>a+b,0));
+  const cs=Array.from({length:C},(_,j)=>rows.reduce((a,r)=>a+r[j],0));
+  const N=rs.reduce((a,b)=>a+b,0);
+  let x=0, cols=0;
+  for(let j=0;j<C;j++){
+    if(!cs[j]) continue; cols++;
+    for(let i=0;i<R;i++){ const E=rs[i]*cs[j]/N; if(E>0) x+=Math.pow(rows[i][j]-E,2)/E; }
+  }
+  const df=Math.max((R-1)*(cols-1),1);
+  return {x,df,p:chiP(x,df),N};
+}
+function pct(k,n){ return n? Math.round(100*k/n)+"% ("+k+"/"+n+")" : "–"; }
+function vbarsSVG(bars){ // vertical % bars, optional 95% CI whiskers
+  const W=360,H=196,L=38,R=8,T=16,B=48,pw=W-L-R,ph=H-T-B;
+  const n=bars.length,bw=Math.min(56,pw/n*0.62);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img">';
+  [0,25,50,75,100].forEach(gv=>{
+    const y=T+ph*(1-gv/100);
+    s+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#EAEAEA"/><text x="'+(L-4)+'" y="'+(y+3)+'" font-size="9" fill="#777" text-anchor="end">'+gv+'%</text>';
+  });
+  bars.forEach((b,i)=>{
+    const cx=L+pw*(i+0.5)/n;
+    if(b.frac!=null&&!isNaN(b.frac)){
+      const bh=ph*b.frac,y=T+ph-bh;
+      s+='<rect x="'+(cx-bw/2)+'" y="'+y+'" width="'+bw+'" height="'+Math.max(bh,0)+'" rx="3" fill="'+b.color+'"/>';
+      let topY=y;
+      if(b.lo!=null&&b.hi!=null){
+        const y1=T+ph*(1-b.hi),y2=T+ph*(1-b.lo);
+        s+='<line x1="'+cx+'" y1="'+y1+'" x2="'+cx+'" y2="'+y2+'" stroke="#1A1A1A" stroke-width="1.5"/><line x1="'+(cx-5)+'" y1="'+y1+'" x2="'+(cx+5)+'" y2="'+y1+'" stroke="#1A1A1A" stroke-width="1.5"/><line x1="'+(cx-5)+'" y1="'+y2+'" x2="'+(cx+5)+'" y2="'+y2+'" stroke="#1A1A1A" stroke-width="1.5"/>';
+        topY=Math.min(topY,y1);
+      }
+      s+='<text x="'+cx+'" y="'+Math.max(topY-4,10)+'" font-size="10" font-weight="700" fill="#1A1A1A" text-anchor="middle">'+Math.round(100*b.frac)+'%</text>';
+    } else {
+      s+='<text x="'+cx+'" y="'+(T+ph-6)+'" font-size="10" fill="#999" text-anchor="middle">no data</text>';
+    }
+    s+='<text x="'+cx+'" y="'+(T+ph+15)+'" font-size="9.5" font-weight="600" fill="#1A1A1A" text-anchor="middle">'+b.label+'</text>';
+    if(b.sub) s+='<text x="'+cx+'" y="'+(T+ph+28)+'" font-size="9" fill="#777" text-anchor="middle">'+b.sub+'</text>';
+  });
+  return s+'</svg>';
+}
+function pairedHbars(cats){ // two horizontal bars per category, scaled to the max value
+  const W=360,L=96,R=36,rowH=30,T=18,H=T+cats.length*rowH+6,pw=W-L-R;
+  const mx=Math.max(0.05,...cats.map(c=>Math.max(c.p1,c.p2)))*1.12;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img">';
+  s+='<rect x="'+L+'" y="2" width="10" height="10" rx="2" fill="#CC0000"/><text x="'+(L+14)+'" y="11" font-size="9.5" fill="#444">before shakes</text>';
+  s+='<rect x="'+(L+112)+'" y="2" width="10" height="10" rx="2" fill="#9A9A9A"/><text x="'+(L+126)+'" y="11" font-size="9.5" fill="#444">all focal windows</text>';
+  cats.forEach((c,i)=>{
+    const y=T+i*rowH;
+    s+='<text x="'+(L-6)+'" y="'+(y+15)+'" font-size="9.5" fill="#1A1A1A" text-anchor="end">'+c.label+'</text>';
+    const w1=pw*c.p1/mx, w2=pw*c.p2/mx;
+    s+='<rect x="'+L+'" y="'+(y+3)+'" width="'+Math.max(w1,.5)+'" height="9" rx="2" fill="#CC0000"/><text x="'+(L+w1+3)+'" y="'+(y+11)+'" font-size="8.5" fill="#444">'+Math.round(100*c.p1)+'%</text>';
+    s+='<rect x="'+L+'" y="'+(y+14)+'" width="'+Math.max(w2,.5)+'" height="9" rx="2" fill="#9A9A9A"/><text x="'+(L+w2+3)+'" y="'+(y+22)+'" font-size="8.5" fill="#444">'+Math.round(100*c.p2)+'%</text>';
+  });
+  return s+'</svg>';
+}
+
+function renderResults(){
+  // One record per real event: two observers logging the same dog within 20 s
+  // are the same shake, so the second copy is dropped from every test below.
+  const byT={}; let dropped=0;
+  const uniq=S.shakes.slice().sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0)).filter(x=>{
+    if(!x.dogId) return true;                 // unregistered dogs cannot be matched
+    const k=String(x.dogId), prev=byT[k];
+    if(prev!=null && Math.abs((x.epoch_ms||0)-prev)<=20000){ dropped++; return false; }
+    byT[k]=x.epoch_ms||0; return true;
+  });
+  $("r-dupnote").innerHTML = dropped
+    ? "<b>"+dropped+"</b> duplicate record"+(dropped>1?"s":"")+" dropped (same dog logged by a second observer within 20 s). Tests below use "+uniq.length+" unique shake events; the duplicates are kept for the reliability check."
+    : "No duplicate records detected. Tests below use all "+uniq.length+" shake events.";
+
+  $("r-nshake").textContent=uniq.length;
+  $("r-nfocal").textContent=S.focals.length;
+  $("r-ndogs").textContent=S.dogs.size;
+  $("r-ngate").textContent=S.gates.filter(x=>x.shook!=="LOST").length;
+  ["dogs","shake","focal","gate"].forEach((v,i)=>{
+    const n=[S.dogs.size,uniq.length,S.focals.length,S.gates.length][i];
+    const b=$("b-"+v); b.hidden=!n; b.textContent=n;
+  });
+
+  // main test: transition proportion, shake vs control windows, vs Bryce et al. 2024
+  const sv=uniq.filter(x=>x.pre!=="NS"&&x.post!=="NS");
+  const k1=sv.filter(x=>x.pre!==x.post).length, n1=sv.length;
+  const fv=S.focals.filter(x=>x.b20!=="NS");
+  const k2=fv.filter(x=>x.b0!==x.b20).length, n2=fv.length;
+  const BK=107, BN=120; // Bryce et al. 2024: behavior differed in 107 of 120 shakes
+  const r=twoProp(k1,n1,k2,n2), rb=twoProp(k1,n1,BK,BN);
+  const w1=wilson(k1,n1), w2=wilson(k2,n2), wB=wilson(BK,BN);
+  $("r-fig1").innerHTML=vbarsSVG([
+    {label:"Bryce 2024", sub:"107/120 · NYC", frac:BK/BN, lo:wB[0], hi:wB[1], color:"#9A9A9A"},
+    {label:"Our shakes", sub:n1?(k1+"/"+n1):"no data", frac:n1?k1/n1:null, lo:w1?w1[0]:null, hi:w1?w1[1]:null, color:"#CC0000"},
+    {label:"Our controls", sub:n2?(k2+"/"+n2):"no data", frac:n2?k2/n2:null, lo:w2?w2[0]:null, hi:w2?w2[1]:null, color:"#4A4A4A"}
+  ]);
+  const V=$("r-verdict");
+  if(!r||n1<5||n2<5){
+    V.innerHTML="<b>Collecting…</b> "+n1+" usable shake windows and "+n2+" control windows so far. The main test runs once each side has at least 5.";
+  } else {
+    const dir=r.p1>r.p2?"more":"less";
+    V.innerHTML="<b>Behavior changed in "+Math.round(100*r.p1)+"% of shake windows vs "+Math.round(100*r.p2)+"% of random control windows.</b> "
+      +(r.pval<0.05
+        ? "Shakes sit at behavioral transitions "+dir+" often than chance ("+fmtP(r.pval)+"), "+(r.p1>r.p2?"supporting":"contradicting")+" the transition-marker hypothesis."
+        : "No detectable difference from chance yet with this sample ("+fmtP(r.pval)+").");
+  }
+  let T="";
+  if(r&&n1>=5&&n2>=5){
+    const diff=r.p1-r.p2, se=Math.sqrt(r.p1*(1-r.p1)/n1+r.p2*(1-r.p2)/n2);
+    T+="<b>Shakes vs our control:</b> difference of "+Math.round(100*diff)+" percentage points (95% CI "
+      +Math.round(100*(diff-1.96*se))+" to "+Math.round(100*(diff+1.96*se))+"); two-proportion z = "+r.z.toFixed(2)+", "+fmtP(r.pval)+".<br>";
+  } else {
+    T+="<b>Shakes vs our control:</b> runs once each side has 5 windows.<br>";
+  }
+  if(rb&&n1>=5){
+    T+="<b>Our shakes vs the NYC study:</b> "+Math.round(100*rb.p1)+"% here vs 89% there; z = "+rb.z.toFixed(2)+", "+fmtP(rb.pval)+". "
+      +(rb.pval<0.05?"Our dogs differ from the NYC sample.":"Statistically consistent with the NYC sample, so their result replicates here.");
+  } else {
+    T+="<b>Our shakes vs the NYC study:</b> runs once we have 5 shake windows.";
+  }
+  $("r-tests").innerHTML=T;
+
+  // transition matrix
+  const rows=CATS.map(c=>c[0]).concat(["NS"]), cols=CATS.map(c=>c[0]);
+  const M={}; rows.forEach(a=>{M[a]={}; cols.forEach(b=>M[a][b]=0);});
+  uniq.forEach(x=>{ if(M[x.pre]&&M[x.pre][x.post]!=null) M[x.pre][x.post]++; });
+  let mx=1; rows.forEach(a=>cols.forEach(b=>{ if(M[a][b]>mx) mx=M[a][b]; }));
+  let h='<table><tr><th class="rowh">before \\ after</th>'+cols.map(c=>"<th>"+CATL[c]+"</th>").join("")+"</tr>";
+  rows.forEach(a=>{
+    h+='<tr><th class="rowh">'+CATL[a]+"</th>";
+    cols.forEach(b=>{ const v=M[a][b];
+      h+='<td class="num" style="--a:'+(v?Math.round(12+65*v/mx):0)+'">'+(v||"·")+"</td>"; });
+    h+="</tr>";
+  });
+  $("r-matrix").innerHTML=h+"</table>";
+
+  // fig 2: behavior preceding shakes vs availability from focal windows
+  const preList=uniq.map(x=>x.pre).filter(v=>v&&v!=="NS");
+  const availList=S.focals.map(x=>x.b0).filter(Boolean);
+  if(preList.length>=5&&availList.length>=5){
+    const pc={},ac={}; CATS.forEach(c=>{pc[c[0]]=0;ac[c[0]]=0;});
+    preList.forEach(v=>{ if(pc[v]!=null)pc[v]++; });
+    availList.forEach(v=>{ if(ac[v]!=null)ac[v]++; });
+    $("r-fig2").innerHTML=pairedHbars(CATS.map(c=>({label:CATL[c[0]], p1:pc[c[0]]/preList.length, p2:ac[c[0]]/availList.length})));
+    if(preList.length>=10&&availList.length>=20){
+      const t=chi2Table([CATS.map(c=>pc[c[0]]),CATS.map(c=>ac[c[0]])]);
+      $("r-fig2stat").textContent="Chi-square test comparing the two distributions: χ² = "+t.x.toFixed(1)+", df = "+t.df+", "+fmtP(t.p)+" (approximate with small counts).";
+    } else $("r-fig2stat").textContent="Formal test runs at 10 shakes and 20 focal windows.";
+  } else $("r-fig2").innerHTML='<p class="sub">Needs at least 5 shake records and 5 focal windows.</p>';
+
+  // figs 3-4: gate latency and greeting-crowd effect
+  const gAll=S.gates, gLost=gAll.filter(x=>x.shook==="LOST").length;
+  const g=gAll.filter(x=>x.shook==="Y"||x.shook==="N"), gShook=g.filter(x=>x.shook==="Y");
+  const lat=gShook.map(x=>+x.latencySec).filter(x=>!isNaN(x)).sort((a,b)=>a-b);
+  const medLat=lat.length?lat[Math.floor(lat.length/2)]:null;
+  if(g.length){
+    const bins=[["≤30 s",x=>x<=30],["30–60 s",x=>x>30&&x<=60],["1–2 min",x=>x>60&&x<=120],["2–5 min",x=>x>120]];
+    const bars=bins.map(([lb,f])=>{ const c=lat.filter(f).length; return {label:lb,sub:"n="+c,frac:c/g.length,color:"#CC0000"}; });
+    const ns=g.length-gShook.length;
+    bars.push({label:"no shake",sub:"n="+ns,frac:ns/g.length,color:"#9A9A9A"});
+    $("r-fig3").innerHTML=vbarsSVG(bars);
+    $("r-fig3stat").textContent=medLat!=null?("Median latency among shakers: "+medLat+" s."):"";
+  } else $("r-fig3").innerHTML='<p class="sub">No gate entries yet.</p>';
+
+  const ge=g.filter(x=>x.greeters!=null&&x.greeters!=="");
+  if(ge.length){
+    const grp=["0","1","2","3"].map(k=>{
+      const sub=ge.filter(x=>String(x.greeters)===k);
+      return {k, n:sub.length, s:sub.filter(x=>x.shook==="Y").length};
+    });
+    $("r-fig4").innerHTML=vbarsSVG(grp.map(o=>({label:(o.k==="3"?"3+":o.k)+" greeters", sub:"n="+o.n, frac:o.n?o.s/o.n:null, color:"#CC0000"})));
+    if(ge.length>=20){
+      const t=chi2Table([grp.map(o=>o.s),grp.map(o=>o.n-o.s)]);
+      $("r-fig4stat").textContent="Chi-square test of shake probability across crowd sizes: χ² = "+t.x.toFixed(1)+", df = "+t.df+", "+fmtP(t.p)+" (approximate with small counts).";
+    } else $("r-fig4stat").textContent="Formal test runs at 20 entries with a greeter count.";
+  } else $("r-fig4").innerHTML='<p class="sub">No gate entries with a greeter count yet.</p>';
+
+  // side-by-side with Bryce et al. 2024
+  const tails=uniq.filter(x=>x.tailPre&&x.tailPost&&x.tailPre!=="NS"&&x.tailPost!=="NS");
+  const tailSame=tails.filter(x=>x.tailPre===x.tailPost).length;
+  const nears=uniq.filter(x=>x.nearPre!=null&&x.nearPost!=null);
+  const nearDown=nears.filter(x=>+x.nearPost<+x.nearPre).length;
+  const contacts=uniq.filter(x=>x.contact==="Y").length;
+  const coded=uniq.filter(x=>x.contact==="Y"||x.contact==="N").length;
+  const full=uniq.filter(x=>x.type==="FULL").length;
+  $("r-bryce").innerHTML=[
+    ["Shakes recorded", String(uniq.length), "120"],
+    ["Dogs in study", S.dogs.size+" registered", "96 observed"],
+    ["Full-body (vs head-only) shakes", pct(full,uniq.length), "83% (100/120)"],
+    ["Behavior changed across the shake", pct(k1,n1), "89% (107/120)"],
+    ["Shake right after physical contact", pct(contacts,coded), "34% (41/120)"],
+    ["Dogs within 1 m decreased after shake", pct(nearDown,nears.length), "28% (34/120)"],
+    ["Tail position unchanged", pct(tailSame,tails.length), "majority (no % reported)"],
+    ["Random-window control", pct(k2,n2), "none collected"]
+  ].map(row=>"<tr><td>"+row[0]+"</td><td>"+row[1]+"</td><td>"+row[2]+"</td></tr>").join("");
+
+  // other measures
+  const fShakes=S.focals.filter(x=>x.shookDuring==="Y").length;
+  $("r-secondary").innerHTML=
+    "<b>Gate:</b> "+pct(gShook.length,g.length)+" of entering dogs shook within 5 min of leash-off"
+    +(medLat!=null?" (median "+medLat+" s; "+lat.filter(x=>x<=60).length+" in the first minute)":"")+".<br>"
+    +"<b>Shake rate from focals:</b> "+fShakes+" shakes seen during "+S.focals.length+" ten-second focal windows"
+    +(S.focals.length? " ≈ "+(360*fShakes/S.focals.length).toFixed(1)+" shakes per dog-hour":"")+".";
+
+  // reliability: same registered dog, different observer, within 20 s
+  const byDog={};
+  S.shakes.filter(x=>x.dogId).forEach(x=>{ (byDog[x.dogId]=byDog[x.dogId]||[]).push(x); });
+  let pairs=0, agree=0;
+  Object.values(byDog).forEach(list=>{
+    list.sort((a,b)=>(a.epoch_ms||0)-(b.epoch_ms||0));
+    for(let i=0;i<list.length-1;i++){
+      const a=list[i],b=list[i+1];
+      if((b.epoch_ms-a.epoch_ms)<=20000 && a.observer!==b.observer){ pairs++; if(a.pre===b.pre&&a.post===b.post) agree++; }
+    }
+  });
+  $("r-rel").innerHTML = pairs
+    ? "<b>"+pairs+"</b> double-sighted shakes (two observers, same dog, within 20 s). Both coders matched on before AND after in <b>"+agree+"</b> ("+Math.round(100*agree/pairs)+"%). This is our inter-observer reliability; drop one of each pair before formal analysis."
+    : "No double-sighted shakes yet. When two observers log the same dog within 20 s, agreement is scored here.";
+
+  // shakes per dog
+  const counts={}; uniq.forEach(x=>{ if(x.dogId) counts[String(x.dogId)]=(counts[String(x.dogId)]||0)+1; });
+  const ds=$("r-dogshakes"); ds.innerHTML="";
+  const ranked=[...S.dogs.values()].map(d=>[d,counts[String(d.id)]||0]).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(!ranked.length) ds.innerHTML='<p class="sub">Register dogs to see per-dog counts.</p>';
+  ranked.forEach(([d,n])=>{
+    const el=document.createElement("div"); el.className="dl"; el.style.cursor="default";
+    el.innerHTML=thumb(d)+'<div class="nm">'+esc(d.name)+'</div><div class="mt num">'+n+' shake'+(n===1?"":"s")+'</div>';
+    ds.appendChild(el);
+  });
+
+  if(typeof renderPersonality==="function") renderPersonality();
+}
+
+
+/* ================= PERSONALITY ================= */
+const SOCIAL_CATS=["PLAY","CHG","CAS"];
+// Four axes, all from focal observations so they share the same sample size.
+// Per-dog shake counts are deliberately NOT an axis: with roughly a dozen shakes
+// spread over 25 dogs, most dogs have 0 or 1, which is noise, not temperament.
+const TRAITS=[["social","Social"],["play","Playful"],["restless","Restless"],
+              ["people","People"]];
+const MIN_OBS=4;          // focal windows before a profile is shown at all
+const GOOD_OBS=8;         // focal windows before it is treated as reasonable
+
+function pearson(xs,ys){
+  const n=xs.length; if(n<3) return null;
+  const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<n;i++){ const a=xs[i]-mx, b=ys[i]-my; sxy+=a*b; sxx+=a*a; syy+=b*b; }
+  if(sxx<=0||syy<=0) return null;
+  return sxy/Math.sqrt(sxx*syy);
+}
+
+function dogTraits(){
+  const out=new Map();
+  const shakeCount={};
+  S.shakes.forEach(x=>{ if(x.dogId) shakeCount[String(x.dogId)]=(shakeCount[String(x.dogId)]||0)+1; });
+  const maxShakes=Math.max(1,...Object.values(shakeCount));
+  S.dogs.forEach((d,id)=>{
+    const key=String(id);
+    const fo=S.focals.filter(x=>String(x.dogId)===key);
+    if(!fo.length) return;
+    const states=fo.map(x=>x.b0).filter(Boolean);
+    const n=states.length; if(!n) return;
+    const share=f=>states.filter(f).length/n;
+    const switched=fo.filter(x=>x.b20&&x.b20!=="NS"&&x.b0!==x.b20).length;
+    const denom=fo.filter(x=>x.b20&&x.b20!=="NS").length;
+    out.set(key,{
+      id:key, dog:d, n,
+      social:share(c=>SOCIAL_CATS.includes(c)),
+      play:share(c=>c==="PLAY"),
+      restless:denom?switched/denom:0,
+      people:share(c=>c==="PER"),
+      shakes:shakeCount[key]||0
+    });
+  });
+  return out;
+}
+
+function radarSVG(t,mean,withLabels){
+  const R = withLabels ? 58 : 46;
+  const pad = withLabels ? 66 : 7;
+  const cx = R+pad, cy = R+pad, W = 2*(R+pad), H = W;
+  const k=TRAITS.length;
+  const pt=(i,r)=>{
+    const a=-Math.PI/2+i*2*Math.PI/k;
+    return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+  };
+  let g="";
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const pts=TRAITS.map((_,i)=>pt(i,R*f).map(v=>v.toFixed(1)).join(",")).join(" ");
+    g+='<polygon points="'+pts+'" fill="none" stroke="#E2E2E2" stroke-width="1"/>';
+  });
+  TRAITS.forEach((_,i)=>{
+    const [x,y]=pt(i,R);
+    g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#E2E2E2"/>';
+  });
+  const poly=(vals,fill,stroke,op)=>{
+    const pts=TRAITS.map(([k2],i)=>pt(i,R*Math.max(0,Math.min(1,vals[k2]||0))).map(v=>v.toFixed(1)).join(",")).join(" ");
+    return '<polygon points="'+pts+'" fill="'+fill+'" fill-opacity="'+op+'" stroke="'+stroke+'" stroke-width="2"/>';
+  };
+  if(mean) g+=poly(mean,"#9A9A9A","#9A9A9A",0.18);
+  if(t) g+=poly(t,"#CC0000","#CC0000",0.30);
+  if(withLabels){
+    TRAITS.forEach(([k2,lab],i)=>{
+      const [x,y]=pt(i,R+13);
+      const anc = x>cx+4?"start" : x<cx-4?"end" : "middle";
+      const dy = y<cy-4?-2 : y>cy+4?10 : 3;
+      g+='<text x="'+x.toFixed(1)+'" y="'+(y+dy).toFixed(1)+'" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="'+anc+'">'+lab+'</text>';
+    });
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="behavior profile">'+g+'</svg>';
+}
+
+function nickname(t,mean){
+  let best=null,bd=0;
+  TRAITS.forEach(([k2])=>{ const d=(t[k2]||0)-(mean[k2]||0); if(Math.abs(d)>Math.abs(bd)){ bd=d; best=k2; } });
+  if(!best||Math.abs(bd)<0.12) return "middle of the pack";
+  const up={social:"unusually social",play:"big player",restless:"restless",people:"sticks with people"};
+  const dn={social:"keeps to itself",play:"not here to play",restless:"settled",people:"ignores people"};
+  return (bd>0?up:dn)[best];
+}
+
+function renderPersonality(){
+  const T=dogTraits();
+  const list=[...T.values()].filter(t=>t.n>=MIN_OBS).sort((a,b)=>b.n-a.n);
+  const mean={};
+  TRAITS.forEach(([k2])=>{
+    mean[k2]= list.length ? list.reduce((a,t)=>a+(t[k2]||0),0)/list.length : 0;
+  });
+
+  // heterogeneity: do dogs differ more than sampling noise? social vs non-social counts
+  const H=$("p-hetero");
+  const use=list.filter(t=>t.n>=MIN_OBS);
+  if(use.length>=3){
+    const soc=use.map(t=>Math.round(t.social*t.n));
+    const non=use.map(t=>t.n-Math.round(t.social*t.n));
+    const r=chi2Table([soc,non]);
+    const spread=Math.round(100*Math.min(...use.map(t=>t.social)))+"% to "+Math.round(100*Math.max(...use.map(t=>t.social)))+"%";
+    H.innerHTML="Across <b>"+use.length+"</b> dogs with at least "+MIN_OBS+" focal observations, the share of observations spent in social behavior ranged from <b>"+spread+"</b>. "
+      +"Testing whether that spread exceeds what random sampling of identical dogs would produce: &chi;&sup2; = "+r.x.toFixed(1)+", df = "+r.df+", "+fmtP(r.p)+". "
+      +(r.p<0.05
+        ? "<b>The dogs differ more than chance.</b> Individual identity is doing real work here, which is the first requirement for personality."
+        : "<b>Not distinguishable from chance yet.</b> With this many observations per dog, real differences of a plausible size would often go undetected, so this is weak evidence of sameness, not evidence of no differences.")
+      +" The test treats each observation as independent, which overstates certainty when several come from one dog in quick succession.";
+  } else {
+    H.innerHTML="Needs at least 3 dogs with "+MIN_OBS+" or more focal observations. So far: <b>"+T.size+"</b> dogs have any focal data, <b>"+use.length+"</b> have enough.";
+  }
+
+  // behavioral space
+  const SP=$("p-space");
+  if(list.length>=3){
+    const r=pearson(list.map(t=>t.social),list.map(t=>t.restless));
+    let h='<div class="pspace"><div class="pax ytit">more switching</div>'
+         +'<div class="pplot" id="pplot"></div>'
+         +'<div class="pax xtit">alone &#8592;&nbsp;&nbsp;share of time social&nbsp;&nbsp;&#8594; social</div></div>'
+         +'<div class="preadout" id="preadout">Tap a dog to read its numbers.</div>';
+    SP.innerHTML=h;
+    const plot=$("pplot");
+    const bySocial=list.slice().sort((a,b)=>a.social-b.social);
+    bySocial.forEach((t,i)=>{
+      const el=document.createElement("div");
+      el.className="pdot"+(t.n<GOOD_OBS?" thin":"")+(i%2?" alt":"");
+      el.style.left=(6+88*t.social)+"%";
+      el.style.bottom=(6+88*t.restless)+"%";
+      el.title=t.dog.name+" · "+t.n+" observations";
+      el.tabIndex=0;
+      const src=t.dog.photoUrl||S.pendingPhoto[t.id];
+      el.innerHTML=(src?'<img src="'+esc(src)+'" alt="'+esc(t.dog.name)+'">':'<span class="ph">&#128021;</span>');
+      const say=()=>{
+        [...plot.children].forEach(c=>c.classList.remove("on"));
+        el.classList.add("on");
+        $("preadout").innerHTML='<b>'+esc(t.dog.name)+'</b> · '+t.n+' observations · '
+          +Math.round(100*t.social)+'% of time social · behavior changed in '
+          +Math.round(100*t.restless)+'% of its windows'
+          +(t.n<GOOD_OBS?' · <span style="color:var(--darkred)">thin data</span>':'');
+      };
+      el.addEventListener("click",say);
+      el.addEventListener("focus",say);
+      plot.appendChild(el);
+    });
+    $("p-spacestat").innerHTML = r==null ? ""
+      : "Correlation between the two traits across "+list.length+" dogs: r = "+r.toFixed(2)+"."
+        +(Math.abs(r)>0.5?" That is a strong enough tilt to call a syndrome, on this sample size, tentatively.":" Close to zero, so these two traits are moving independently in these dogs.");
+  } else {
+    SP.innerHTML='<p class="sub">Needs at least 3 dogs with '+MIN_OBS+' or more focal observations.</p>';
+    $("p-spacestat").textContent="";
+  }
+
+  // key diagram: the axes named once, so each card can stay compact
+  if(list.length) $("p-key").innerHTML=radarSVG(null,mean,true);
+  else $("p-key").innerHTML='<p class="sub">Profiles appear once dogs have focal observations.</p>';
+
+  // individual cards
+  const C=$("p-cards");
+  if(!list.length){
+    C.innerHTML='<p class="sub">No dog yet has '+MIN_OBS+' focal observations. Team B’s windows are what fill this in, so spread them across many dogs.</p>';
+  } else {
+    C.innerHTML="";
+    list.forEach(t=>{
+      const el=document.createElement("div");
+      el.className="dl"; el.style.cursor="default";
+      const src=t.dog.photoUrl||S.pendingPhoto[t.id];
+      el.innerHTML=(src?'<img src="'+esc(src)+'" alt="">':'<div class="ph" style="width:100%;aspect-ratio:1;border-radius:8px;background:var(--wash)"></div>')
+        +'<div class="nm">'+esc(t.dog.name)+'</div>'
+        +'<div class="mt num">'+t.n+' obs · '+t.shakes+' shake'+(t.shakes===1?"":"s")+'</div>'
+        +'<div class="mt" style="color:var(--red); font-weight:700">'+nickname(t,mean)+'</div>'
+        +radarSVG(t,mean,false)
+        +(t.n<GOOD_OBS?'<div class="mt" style="color:var(--darkred)">thin data: '+t.n+' observations</div>':'');
+      C.appendChild(el);
+    });
+  }
+
+  // split-half repeatability
+  const RP=$("p-repeat");
+  const rich=[...T.values()].filter(t=>t.n>=6);
+  if(rich.length>=4){
+    const a=[],b2=[];
+    rich.forEach(t=>{
+      const fo=S.focals.filter(x=>String(x.dogId)===t.id).sort((p1,p2)=>(p1.epoch_ms||0)-(p2.epoch_ms||0));
+      const half=Math.floor(fo.length/2);
+      const sh=arr=>arr.filter(x=>SOCIAL_CATS.includes(x.b0)).length/arr.length;
+      a.push(sh(fo.slice(0,half))); b2.push(sh(fo.slice(half)));
+    });
+    const r=pearson(a,b2);
+    RP.innerHTML="For the <b>"+rich.length+"</b> dogs with 6 or more focal observations, we split each dog’s observations into its earlier half and its later half and measured sociability in each. "
+      +(r==null?"There is not enough spread to compute a correlation yet."
+        : "The two halves correlate at <b>r = "+r.toFixed(2)+"</b>. A dog that is genuinely social should look social in both halves, so a high value here is the signature of a real individual difference and a low value means we are mostly measuring the moment.")
+      +" This is a crude stand-in for repeatability. The published estimates average about 0.37 and come from many observations per individual across days or seasons, so do not read our number as comparable; read it as a demonstration of how the quantity is built.";
+  } else {
+    RP.innerHTML="Needs at least 4 dogs with 6 or more focal observations. So far <b>"+rich.length+"</b> qualify. Team B can get a dog there by returning to the same animal for several separate windows.";
+  }
+}
+
+/* ---------- CSV download (plain browser download on your own site) ---------- */
+function csv(rows,cols){
+  const q=v=>{ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>q(r[c])).join(",")).join("\n")+"\n";
+}
+const CSVDEFS={
+  dogs:   ()=>[[...S.dogs.values()],["id","name","size","sex","age","coat","photoUrl","observer","epoch_ms","timestamp"]],
+  shakes: ()=>[S.shakes,["id","dogId","unregSize","type","pre","post","tailPre","tailPost","nearPre","nearPost","contact","observer","epoch_ms","timestamp"]],
+  focals: ()=>[S.focals,["id","dogId","unregSize","b0","b20","shookDuring","observer","epoch_ms","timestamp"]],
+  gates:  ()=>[S.gates,["id","dogId","unregSize","shook","latencySec","greeters","observer","epoch_ms","timestamp"]]
+};
+document.querySelectorAll("[data-csv]").forEach(b=>b.addEventListener("click",()=>{
+  const key=b.dataset.csv, [rows,cols]=CSVDEFS[key]();
+  if(!rows.length){ toast("No "+key+" yet",true); return; }
+  const blob=new Blob([csv(rows,cols)],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=key+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}));
+
+$("r-refresh").addEventListener("click",()=>{ toast("Refreshing…"); flushOutbox(); schedulePoll(0); });
+
+function applyFrozen(){
+  if(!FROZEN) return;
+  document.body.classList.add("frozen");
+  $("obschip").hidden=true;
+  const sc=$("syncchip"); sc.textContent="Archived"; sc.classList.remove("warnc");
+  const msg = "Archived record of this study. The form below is kept as documentation"
+            + " of the protocol and is no longer accepting data.";
+  ["v-dogs","v-shake","v-focal","v-gate"].forEach(id=>{
+    const sec=$(id); if(!sec) return;
+    sec.classList.add("ro");
+    const b=document.createElement("div");
+    b.className="banner"; b.style.borderColor="var(--ink)"; b.style.color="var(--ink)";
+    b.textContent=msg;
+    sec.insertBefore(b, sec.firstChild);
+  });
+  const cb=$("cfgbanner");
+  if(cb){ cb.hidden=false; cb.style.borderColor="var(--ink)"; cb.style.color="var(--ink)";
+    cb.textContent="This page is a frozen archive of a completed field lab. The data shown is final."; }
+}
+applyFrozen();
+renderDogs(); renderResults(); renderRecents(); renderTrials();
+</script>
+</body>
+</html>
